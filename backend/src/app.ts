@@ -19,7 +19,7 @@ app.use(express.json());
 // Health Check
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'i<3nad', timestamp: new Date().toISOString() });
 });
 
 // ---------------------------------------------------------------------------
