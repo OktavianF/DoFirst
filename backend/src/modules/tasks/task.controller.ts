@@ -37,7 +37,7 @@ export class TaskController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user } = req as AuthenticatedRequest;
-      const task = await taskService.getTaskById(user.id, req.params.id);
+      const task = await taskService.getTaskById(user.id, req.params.id as string);
 
       res.json({
         success: true,
@@ -51,7 +51,7 @@ export class TaskController {
   async complete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user } = req as AuthenticatedRequest;
-      const result = await taskService.completeTask(user.id, req.params.id);
+      const result = await taskService.completeTask(user.id, req.params.id as string);
 
       res.json({
         success: true,
