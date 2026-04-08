@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+const isProd = process.env.NODE_ENV === 'production';
+const envFile = isProd ? '.env.production' : '.env.development';
+
+// Prioritaskan file env spesifik (.env.development / .env.production)
+dotenv.config({ path: path.resolve(__dirname, `../../${envFile}`) });
+// Opsional fallback ke .env biasa jika file di atas tidak ditemukan 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 function requireEnv(key: string): string {

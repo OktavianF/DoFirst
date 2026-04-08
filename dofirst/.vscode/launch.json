@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "DoFirst (Local - Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "deviceId": "chrome",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=http://localhost:3000/api"
+            ]
+        },
+        {
+            "name": "DoFirst (Local - Android Fisik/Emulator)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=http://192.168.1.147:3000/api"
+            ]
+        },
+        {
+            "name": "DoFirst (Prod - Azure VM)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=http://52.172.248.68:3000/api"
+            ]
+        }
+    ]
+}

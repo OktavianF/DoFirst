@@ -10,16 +10,10 @@ import 'package:flutter/foundation.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class ApiClient {
-  static String get _baseUrl {
-    // Web
-    if (kIsWeb) return 'http://localhost:3000/api';
-    
-    // Android Fisik (HP Asli) atau Emulator via WiFI / Jaringan Lokal
-    if (Platform.isAndroid) return 'http://192.168.1.2:3000/api';
-    
-    // iOS Simulator / Desktop
-    return 'http://localhost:3000/api';
-  }
+  static const String _baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api', // default ke localhost jika tidak diset
+  );
 
   static String get baseUrl => _baseUrl;
 
