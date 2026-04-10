@@ -44,12 +44,12 @@ class _ProfilePageContent extends StatelessWidget {
                         children: [
                           _buildProfileCard(vm),
                           const SizedBox(height: 20),
-                          // Hide stat dan setting section
-                          // _buildStatsSection(vm),
-                          // const SizedBox(height: 32),
-                          // _buildSettingsList(context),
-                          // const SizedBox(height: 16),
-                          // _buildLogoutButton(context),
+                          // Tampilkan stat dan setting section
+                          _buildStatsSection(vm),
+                          const SizedBox(height: 32),
+                          _buildSettingsList(context),
+                          const SizedBox(height: 16),
+                          _buildLogoutButton(context),
                         ],
                       ),
                     ),

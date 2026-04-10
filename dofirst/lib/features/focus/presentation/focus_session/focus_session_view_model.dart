@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 class FocusSessionViewModel extends ChangeNotifier {
-  static const int _focusMinutes = 1;
-  static const int _breakMinutes = 1;
+  static const int _focusMinutes = 25;
+  static const int _breakMinutes = 5;
   
   int _remainingSeconds = _focusMinutes * 60;
   bool _isRunning = false;

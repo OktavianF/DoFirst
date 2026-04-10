@@ -358,7 +358,7 @@ class _FocusSessionContent extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Marking this as finished will archive the PRD task.',
+          'Marking this as finished will archive the task.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
