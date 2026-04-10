@@ -5,8 +5,10 @@ import '../../../shared/repositories/auth_repository.dart';
 import '../../auth/presentation/login/login_view_model.dart';
 import '../../auth/presentation/login/login_page.dart';
 import '../../home/presentation/home_page.dart';
+import '../../home/presentation/home_view_model.dart';
 import '../../notifications/presentation/notifications_page.dart';
 import '../../tasks/presentation/task_list/task_list_page.dart';
+import '../../tasks/presentation/task_list/task_list_view_model.dart';
 import '../../../shared/navigation/no_transition_route.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
@@ -526,6 +528,10 @@ fontWeight: FontWeight.bold,
                   onPressed: () async {
                     await AuthRepository().logout();
                     if (context.mounted) {
+                      context.read<ProfileViewModel>().clear();
+                      context.read<HomeViewModel>().clear();
+                      context.read<TaskListViewModel>().clear();
+                      
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (_) => ChangeNotifierProvider(

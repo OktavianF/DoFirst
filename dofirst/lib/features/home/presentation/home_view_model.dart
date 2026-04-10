@@ -134,4 +134,20 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clear() {
+    _userName = '';
+    _tasksDone = 0;
+    _totalTasks = 0;
+    _heroTaskId = null;
+    _heroTaskTitle = '';
+    _heroTaskTime = '';
+    _heroTaskScore = 0;
+    _heroTaskTags = [];
+    _upcomingTasks = [];
+    _isLoading = true;
+    _errorMessage = null;
+    _currentTabIndex = 0;
+    notifyListeners();
+  }
 }

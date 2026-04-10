@@ -188,4 +188,14 @@ class TaskListViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clear() {
+    _allTasks = [];
+    _searchQuery = '';
+    _filter = TaskFilter.all;
+    _sort = TaskSort.scoreDesc;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dofirst/features/home/presentation/home_page.dart';
 import 'package:dofirst/features/home/presentation/home_view_model.dart';
 import 'package:dofirst/features/tasks/presentation/task_list/task_list_view_model.dart';
+import 'package:dofirst/features/profile/presentation/profile_view_model.dart';
 
 import 'package:dofirst/features/auth/presentation/login/login_view_model.dart';
 import 'package:dofirst/features/auth/presentation/signup/signup_page.dart';
@@ -70,6 +71,7 @@ class _LoginPageState extends State<LoginPage> {
     if (success) {
       context.read<HomeViewModel>().loadDashboard();
       context.read<TaskListViewModel>().loadTasks();
+      context.read<ProfileViewModel>().loadProfile();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const HomePage()),
         (route) => false,
@@ -142,6 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                                   if (success) {
                                     context.read<HomeViewModel>().loadDashboard();
                                     context.read<TaskListViewModel>().loadTasks();
+                                    context.read<ProfileViewModel>().loadProfile();
                                     Navigator.of(context).pushAndRemoveUntil(
                                       MaterialPageRoute(builder: (_) => const HomePage()),
                                       (route) => false,

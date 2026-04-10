@@ -7,6 +7,7 @@ import 'package:dofirst/features/auth/presentation/signup/signup_view_model.dart
 import 'package:dofirst/features/home/presentation/home_page.dart';
 import 'package:dofirst/features/home/presentation/home_view_model.dart';
 import 'package:dofirst/features/tasks/presentation/task_list/task_list_view_model.dart';
+import 'package:dofirst/features/profile/presentation/profile_view_model.dart';
 import 'package:dofirst/shared/theme/app_theme.dart';
 import 'package:dofirst/shared/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -71,6 +72,7 @@ class _SignupPageState extends State<SignupPage> {
     if (success) {
       context.read<HomeViewModel>().loadDashboard();
       context.read<TaskListViewModel>().loadTasks();
+      context.read<ProfileViewModel>().loadProfile();
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const HomePage()),
         (route) => false,
@@ -265,6 +267,7 @@ class _SignupPageState extends State<SignupPage> {
                                   if (success) {
                                     context.read<HomeViewModel>().loadDashboard();
                                     context.read<TaskListViewModel>().loadTasks();
+                                    context.read<ProfileViewModel>().loadProfile();
                                     Navigator.of(context).pushAndRemoveUntil(
                                       MaterialPageRoute(builder: (_) => const HomePage()),
                                       (route) => false,

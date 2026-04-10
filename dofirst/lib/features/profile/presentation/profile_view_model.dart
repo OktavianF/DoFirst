@@ -56,4 +56,14 @@ class ProfileViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clear() {
+    _fullName = '';
+    _email = '';
+    _avatarUrl = null;
+    _totalTasks = 0;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }
