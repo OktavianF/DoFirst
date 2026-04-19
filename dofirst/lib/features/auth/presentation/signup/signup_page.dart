@@ -170,7 +170,7 @@ class _SignupPageState extends State<SignupPage> {
                               keyboardType: TextInputType.name,
                               textInputAction: TextInputAction.next,
                               decoration: const InputDecoration(
-                                hintText: 'John Doe',
+                                hintText: 'Input your full name',
                               ),
                               validator: FormBuilderValidators.compose([
                                 FormBuilderValidators.required(
@@ -191,7 +191,7 @@ class _SignupPageState extends State<SignupPage> {
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration: const InputDecoration(
-                                hintText: 'name@example.com',
+                                hintText: 'Input your email',
                               ),
                               validator: FormBuilderValidators.compose([
                                 FormBuilderValidators.required(

@@ -191,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                                     keyboardType: TextInputType.emailAddress,
                                     textInputAction: TextInputAction.next,
                                     decoration: const InputDecoration(
-                                      hintText: 'name@company.com',
+                                      hintText: 'Input your email',
                                       hintStyle: TextStyle(
                                         color: Colors.black38,
                                       ),

@@ -199,7 +199,7 @@ fontSize: 18,
               ],
             ),
             child: MaterialButton(
-              onPressed: viewModel.isValid ? () => _onSave(context, viewModel) : null,
+              onPressed: (viewModel.isValid && !viewModel.isLoading) ? () => _onSave(context, viewModel) : null,
               color: const Color(0xFF4F46E5),
               disabledColor: const Color(0xFF4F46E5).withValues(alpha: 0.5),
               elevation: 0,

@@ -23,7 +23,6 @@ class AppBottomNavBar extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
         child: Container(
           key: const Key('app_bottom_nav_bar'),
-          height: 80,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.8),
             boxShadow: [
@@ -34,7 +33,11 @@ class AppBottomNavBar extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 80,
+              child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -57,6 +60,8 @@ class AppBottomNavBar extends StatelessWidget {
                 onTap: () => onTap(2),
               ),
             ],
+          ),
+        ),
           ),
         ),
       ),
