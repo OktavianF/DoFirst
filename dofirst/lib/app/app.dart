@@ -61,9 +61,8 @@ class AuthGate extends StatelessWidget {
 
         final hasToken = snapshot.data ?? false;
         if (hasToken) {
-          // Reload data when returning to app with valid token
-          context.read<HomeViewModel>().loadDashboard();
-          context.read<TaskListViewModel>().loadTasks();
+          // ViewModels already load cached data in their constructors,
+          // then fetch fresh data from API in the background.
           return const HomePage();
         } else {
           return ChangeNotifierProvider(

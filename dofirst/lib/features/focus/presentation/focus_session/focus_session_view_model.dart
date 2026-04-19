@@ -43,17 +43,15 @@ class FocusSessionViewModel extends ChangeNotifier {
       } else {
         _timer?.cancel();
         if (!_isBreakMode) {
-          // Switch to break mode
+          // Focus session finished → switch to break mode
           _isBreakMode = true;
           _remainingSeconds = _breakMinutes * 60;
-          // Restart timer automatically for break
-          _startTimer();
+          _startTimer(); // Auto-start break
         } else {
-          // Finished break
-          _isRunning = false;
+          // Break finished → switch back to focus mode and auto-start
           _isBreakMode = false;
           _remainingSeconds = _focusMinutes * 60;
-          notifyListeners();
+          _startTimer(); // Auto-start next focus session
         }
       }
     });

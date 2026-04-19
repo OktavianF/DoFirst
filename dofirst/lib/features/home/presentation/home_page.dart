@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dofirst/features/focus/presentation/focus_session/focus_session_page.dart';
 import 'package:dofirst/features/profile/presentation/profile_page.dart';
 import 'package:dofirst/features/profile/presentation/profile_view_model.dart';
@@ -20,8 +21,32 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _HomePageContent extends StatelessWidget {
+class _HomePageContent extends StatefulWidget {
   const _HomePageContent();
+
+  @override
+  State<_HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<_HomePageContent> {
+  /// Timer that ticks every minute to update deadline countdowns in realtime
+  Timer? _countdownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) {
+        context.read<HomeViewModel>().refreshCountdowns();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

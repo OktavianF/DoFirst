@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,8 +21,31 @@ class TaskListPage extends StatelessWidget {
   }
 }
 
-class _TaskListPageContent extends StatelessWidget {
+class _TaskListPageContent extends StatefulWidget {
   const _TaskListPageContent();
+
+  @override
+  State<_TaskListPageContent> createState() => _TaskListPageContentState();
+}
+
+class _TaskListPageContentState extends State<_TaskListPageContent> {
+  /// Timer that ticks every minute to update deadline countdowns in realtime
+  Timer? _countdownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh UI every 60 seconds so deadline countdowns update in realtime
+    _countdownTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -505,7 +529,7 @@ fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8.0),
-          if (task.description != null) ...[
+          if (task.description != null) ...[ 
             Text(
               task.description!,
               style: const TextStyle(
@@ -515,44 +539,29 @@ fontSize: 12.0,
             ),
             const SizedBox(height: 12.0),
           ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (task.description == null)
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 14, color: Color(0xFF777587)),
-                    const SizedBox(width: 4),
-                    Text(
-                      task.timeText,
-                      style: const TextStyle(
-fontSize: 12.0,
-                        color: Color(0xFF777587),
-                      ),
-                    ),
-                  ],
-                )
-              else
+          if (task.description == null)
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 14, color: Color(0xFF777587)),
+                const SizedBox(width: 4),
                 Text(
-                  task.timeText.toUpperCase(),
+                  task.timeText,
                   style: const TextStyle(
-fontWeight: FontWeight.bold,
-                    fontSize: 10.0,
-                    color: Color(0xFFBA1A1A),
+fontSize: 12.0,
+                    color: Color(0xFF777587),
                   ),
                 ),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
-                ),
-                child: const Icon(Icons.check, size: 16, color: Colors.transparent),
+              ],
+            )
+          else
+            Text(
+              task.timeText.toUpperCase(),
+              style: const TextStyle(
+fontWeight: FontWeight.bold,
+                fontSize: 10.0,
+                color: Color(0xFFBA1A1A),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -567,61 +576,45 @@ fontWeight: FontWeight.bold,
         border: Border.all(color: const Color(0xFFEDEEEF)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Text(
-                    '${task.score}',
-                    style: const TextStyle(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Text(
+              '${task.score}',
+              style: const TextStyle(
 fontWeight: FontWeight.bold,
-                      fontSize: 10.0,
-                      color: Color(0xFFF59E0B),
-                    ),
+                fontSize: 10.0,
+                color: Color(0xFFF59E0B),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.title,
+                  style: const TextStyle(
+fontWeight: FontWeight.bold,
+                    fontSize: 14.0,
+                    color: Color(0xFF191C1D),
                   ),
                 ),
-                const SizedBox(width: 16.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: const TextStyle(
-fontWeight: FontWeight.bold,
-                          fontSize: 14.0,
-                          color: Color(0xFF191C1D),
-                        ),
-                      ),
-                      const SizedBox(height: 2.0),
-                      Text(
-                        task.timeText,
-                        style: const TextStyle(
+                const SizedBox(height: 2.0),
+                Text(
+                  task.timeText,
+                  style: const TextStyle(
 fontSize: 12.0,
-                          color: Color(0xFF777587),
-                        ),
-                      ),
-                    ],
+                    color: Color(0xFF777587),
                   ),
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
-            ),
-            child: const Icon(Icons.check, size: 14, color: Colors.transparent),
           ),
         ],
       ),
@@ -637,71 +630,55 @@ fontSize: 12.0,
         border: Border.all(color: const Color(0xFFEDEEEF)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
+          ),
+          const SizedBox(width: 16.0),
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
-                ),
-                const SizedBox(width: 16.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              task.title,
-                              style: const TextStyle(
-fontWeight: FontWeight.bold,
-                                fontSize: 14.0,
-                                color: Color(0xFF191C1D),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${task.score}',
-                            style: const TextStyle(
-fontWeight: FontWeight.bold,
-                              fontSize: 10.0,
-                              color: Color(0xFF10B981),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2.0),
-                      Text(
-                        task.timeText,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        task.title,
                         style: const TextStyle(
-fontSize: 12.0,
-                          color: Color(0xFF777587),
+fontWeight: FontWeight.bold,
+                          fontSize: 14.0,
+                          color: Color(0xFF191C1D),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${task.score}',
+                      style: const TextStyle(
+fontWeight: FontWeight.bold,
+                        fontSize: 10.0,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2.0),
+                Text(
+                  task.timeText,
+                  style: const TextStyle(
+fontSize: 12.0,
+                    color: Color(0xFF777587),
                   ),
                 ),
               ],
             ),
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
-            ),
-            child: const Icon(Icons.check, size: 14, color: Colors.transparent),
           ),
         ],
       ),

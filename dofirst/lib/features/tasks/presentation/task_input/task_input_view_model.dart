@@ -13,6 +13,9 @@ class TaskInputViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  /// Stores the actual DateTime when a custom date/time is picked via calendar.
+  DateTime? _customDeadlineDateTime;
+
   String get title => _title;
   int get importance => _importance;
   int get difficulty => _difficulty;
@@ -45,7 +48,40 @@ class TaskInputViewModel extends ChangeNotifier {
 
   void updateDeadline(String value) {
     _deadline = value;
+    // Clear custom datetime when switching to preset options
+    if (['Today', 'Tomorrow', 'Next Week'].contains(value)) {
+      _customDeadlineDateTime = null;
+    }
     notifyListeners();
+  }
+
+  /// Set a custom deadline from calendar/time picker
+  void updateCustomDeadline(String displayText, DateTime dateTime) {
+    _deadline = displayText;
+    _customDeadlineDateTime = dateTime;
+    notifyListeners();
+  }
+
+  /// Convert the deadline selection to an ISO 8601 string with local timezone.
+  /// This ensures the backend receives the exact time the user intended.
+  String? _resolveDeadlineToISO() {
+    switch (_deadline) {
+      case 'Today':
+        final now = DateTime.now();
+        return DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+      case 'Tomorrow':
+        final tomorrow = DateTime.now().add(const Duration(days: 1));
+        return DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59).toIso8601String();
+      case 'Next Week':
+        final nextWeek = DateTime.now().add(const Duration(days: 7));
+        return DateTime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, 59).toIso8601String();
+      default:
+        // Custom date/time from calendar picker
+        if (_customDeadlineDateTime != null) {
+          return _customDeadlineDateTime!.toIso8601String();
+        }
+        return null;
+    }
   }
 
   Future<bool> saveTask() async {
@@ -61,7 +97,7 @@ class TaskInputViewModel extends ChangeNotifier {
         importance: _importance,
         difficulty: _difficulty,
         urgency: _urgency,
-        deadline: _deadline,
+        deadline: _resolveDeadlineToISO(),
       );
       return true;
     } on ApiException catch (e) {

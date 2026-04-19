@@ -25,6 +25,7 @@ class AuthRepository {
         accessToken: session['accessToken'] as String? ?? '',
         refreshToken: session['refreshToken'] as String? ?? '',
       );
+      await ApiClient.saveLoginTimestamp();
     }
 
     return data;
@@ -51,6 +52,7 @@ class AuthRepository {
         accessToken: session['accessToken'] as String? ?? '',
         refreshToken: session['refreshToken'] as String? ?? '',
       );
+      await ApiClient.saveLoginTimestamp();
     }
 
     return data;
@@ -82,6 +84,7 @@ class AuthRepository {
         accessToken: session['accessToken'] as String? ?? '',
         refreshToken: session['refreshToken'] as String? ?? '',
       );
+      await ApiClient.saveLoginTimestamp();
     }
 
     return data;

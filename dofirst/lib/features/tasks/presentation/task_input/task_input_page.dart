@@ -399,6 +399,15 @@ fontWeight: FontWeight.w500,
             },
           );
 
+          // Build the actual DateTime object (preserves timezone)
+          DateTime actualDateTime;
+          if (time != null) {
+            actualDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+          } else {
+            actualDateTime = DateTime(date.year, date.month, date.day, 23, 59, 59);
+          }
+
+          // Build display text for the UI chip
           final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           var formattedDate = '${months[date.month - 1]} ${date.day}, ${date.year}';
 
@@ -409,7 +418,7 @@ fontWeight: FontWeight.w500,
             formattedDate += ' $hour:$minute $period';
           }
 
-          viewModel.updateDeadline(formattedDate);
+          viewModel.updateCustomDeadline(formattedDate, actualDateTime);
         }
       },
       child: Container(

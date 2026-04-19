@@ -199,23 +199,7 @@ class _ProfilePageContent extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTag(
-                label: 'STUDENT',
-                background: const Color(0xFFE2DFFF),
-                foreground: const Color(0xFF0F0069),
-              ),
-              const SizedBox(width: 8),
-              _buildTag(
-                label: 'BETA TESTER',
-                background: const Color(0xFFE7E8E9),
-                foreground: const Color(0xFF464555),
-              ),
-            ],
-          ),
+
         ],
       ),
     );

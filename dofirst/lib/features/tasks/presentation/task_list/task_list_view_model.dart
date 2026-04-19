@@ -6,45 +6,60 @@ class TaskItem {
   final String id;
   final String title;
   final double score;
-  final String timeText;
   final String priority;
   final String? description;
+  final DateTime? deadline;
 
   TaskItem({
     required this.id,
     required this.title,
     required this.score,
-    required this.timeText,
     required this.priority,
     this.description,
+    this.deadline,
   });
 
+  /// Format deadline as a human-readable countdown including minutes.
+  /// Recompute this every time you need a fresh value for realtime updates.
+  String get timeText => formatDeadline(deadline);
+
+  /// Static helper so other widgets can also format deadlines.
+  static String formatDeadline(DateTime? dl) {
+    if (dl == null) return 'No deadline';
+
+    final diff = dl.difference(DateTime.now());
+    if (diff.isNegative) return 'Overdue';
+
+    final days = diff.inDays;
+    final hours = diff.inHours % 24;
+    final minutes = diff.inMinutes % 60;
+
+    if (days > 0) {
+      return hours > 0 ? '${days}d ${hours}h left' : '${days}d left';
+    }
+    if (hours > 0) {
+      return '${hours}h ${minutes}m left';
+    }
+    if (minutes > 0) {
+      return '${minutes}m left';
+    }
+    return 'Due soon';
+  }
+
   factory TaskItem.fromJson(Map<String, dynamic> json) {
-    final deadline = json['deadline'] as String?;
-    String timeText = 'No deadline';
-    if (deadline != null) {
-      final dt = DateTime.tryParse(deadline);
-      if (dt != null) {
-        final diff = dt.difference(DateTime.now());
-        if (diff.inDays > 0) {
-          timeText = '${diff.inDays}d left';
-        } else if (diff.inHours > 0) {
-          timeText = '${diff.inHours}h left';
-        } else if (diff.isNegative) {
-          timeText = 'Overdue';
-        } else {
-          timeText = 'Due soon';
-        }
-      }
+    final deadlineStr = json['deadline'] as String?;
+    DateTime? deadline;
+    if (deadlineStr != null) {
+      deadline = DateTime.tryParse(deadlineStr);
     }
 
     return TaskItem(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
       score: (json['score'] as num?)?.toDouble() ?? 0,
-      timeText: timeText,
       priority: (json['priority'] as String?)?.toUpperCase() ?? 'MEDIUM',
       description: json['description'] as String?,
+      deadline: deadline,
     );
   }
 }
@@ -67,17 +82,40 @@ class TaskListViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   TaskListViewModel() {
-    loadTasks();
+    _loadFromCache().then((_) => loadTasks());
+  }
+
+  /// Load cached tasks for instant display (no network delay)
+  Future<void> _loadFromCache() async {
+    try {
+      final cached = await ApiClient.getCachedData('cached_tasks');
+      if (cached == null) return;
+
+      final tasksList = cached as List<dynamic>;
+      _allTasks = tasksList
+          .map((json) => TaskItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+      _isLoading = false;
+      notifyListeners();
+    } catch (_) {
+      // Cache miss or corrupt — silently continue to fetch from API
+    }
   }
 
   Future<void> loadTasks() async {
-    _isLoading = true;
+    // Only show loading indicator if we have no cached data
+    if (_allTasks.isEmpty) {
+      _isLoading = true;
+    }
     _errorMessage = null;
     notifyListeners();
 
     try {
       final tasksData = await _taskRepo.getTasks();
       _allTasks = tasksData.map((json) => TaskItem.fromJson(json)).toList();
+
+      // Cache the response for next app launch
+      await ApiClient.cacheData('cached_tasks', tasksData);
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {

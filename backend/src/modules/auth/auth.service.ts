@@ -108,6 +108,28 @@ export class AuthService {
   }
 
   /**
+   * Refresh an expired session using a refresh token.
+   * Returns new access + refresh tokens.
+   */
+  async refreshSession(refreshToken: string) {
+    const { data, error } = await supabaseAdmin.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data.session) {
+      throw AppError.unauthorized('Session expired. Please log in again.');
+    }
+
+    return {
+      session: {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        expiresAt: data.session.expires_at,
+      },
+    };
+  }
+
+  /**
    * Sign in with Google ID token.
    */
   async googleSignIn(idToken: string) {

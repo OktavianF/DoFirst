@@ -9,5 +9,6 @@ router.post('/signup', controller.signup);
 router.post('/login', controller.login);
 router.post('/google', controller.googleSignIn);
 router.get('/me', authMiddleware, controller.me);
+router.post('/refresh', controller.refresh);
 
 export { router as authRoutes };
