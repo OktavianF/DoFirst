@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../shared/services/focus_notification_service.dart';
 
 class FocusSessionViewModel extends ChangeNotifier {
-  static const int _focusMinutes = 1;
+  static const int _focusMinutes = 25;
   static const int _breakMinutes = 5;
   
   int _remainingSeconds = _focusMinutes * 60;
@@ -42,6 +43,7 @@ class FocusSessionViewModel extends ChangeNotifier {
 
   void _startTimer() {
     _isRunning = true;
+    WakelockPlus.enable(); // Keep screen on
     notifyListeners();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
@@ -69,6 +71,7 @@ class FocusSessionViewModel extends ChangeNotifier {
   void _pauseTimer() {
     _isRunning = false;
     _timer?.cancel();
+    WakelockPlus.disable(); // Allow screen to dim
     notifyListeners();
   }
 
@@ -82,6 +85,7 @@ class FocusSessionViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    WakelockPlus.disable(); // Ensure screen dimming is restored
     super.dispose();
   }
 }

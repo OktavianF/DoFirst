@@ -62,23 +62,23 @@ class TaskInputViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Convert the deadline selection to an ISO 8601 string with local timezone.
-  /// This ensures the backend receives the exact time the user intended.
+  /// Convert the deadline selection to an ISO 8601 string with explicit UTC timezone (Z).
+  /// This eliminates any timezone ambiguity when parsed by the Node.js backend.
   String? _resolveDeadlineToISO() {
     switch (_deadline) {
       case 'Today':
         final now = DateTime.now();
-        return DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+        return DateTime(now.year, now.month, now.day, 23, 59, 59).toUtc().toIso8601String();
       case 'Tomorrow':
         final tomorrow = DateTime.now().add(const Duration(days: 1));
-        return DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59).toIso8601String();
+        return DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59).toUtc().toIso8601String();
       case 'Next Week':
         final nextWeek = DateTime.now().add(const Duration(days: 7));
-        return DateTime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, 59).toIso8601String();
+        return DateTime(nextWeek.year, nextWeek.month, nextWeek.day, 23, 59, 59).toUtc().toIso8601String();
       default:
         // Custom date/time from calendar picker
         if (_customDeadlineDateTime != null) {
-          return _customDeadlineDateTime!.toIso8601String();
+          return _customDeadlineDateTime!.toUtc().toIso8601String();
         }
         return null;
     }
