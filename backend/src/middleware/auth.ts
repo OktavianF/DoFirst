@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabaseAdmin } from '../lib/supabase';
+import { createSupabaseClient } from '../lib/supabase';
 import { AppError } from '../lib/AppError';
 
 export interface AuthenticatedRequest extends Request {
@@ -9,10 +9,6 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-/**
- * Middleware that verifies Supabase JWT from Authorization header.
- * Attaches the authenticated user to req.user.
- */
 export async function authMiddleware(
   req: Request,
   _res: Response,
@@ -27,10 +23,14 @@ export async function authMiddleware(
 
     const token = authHeader.split(' ')[1];
 
+    const supabase = createSupabaseClient(token);
+
     const {
       data: { user },
       error,
-    } = await supabaseAdmin.auth.getUser(token);
+    } = await supabase.auth.getUser();
+
+    console.log("USER:", user); // optional debug
 
     if (error || !user) {
       throw AppError.unauthorized('Invalid or expired token');

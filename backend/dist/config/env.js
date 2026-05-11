@@ -6,6 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.env = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
+const isProd = process.env.NODE_ENV === 'production';
+const envFile = isProd ? '.env.production' : '.env.development';
+// Prioritaskan file env spesifik (.env.development / .env.production)
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, `../../${envFile}`) });
+// Opsional fallback ke .env biasa jika file di atas tidak ditemukan 
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 function requireEnv(key) {
     const value = process.env[key];

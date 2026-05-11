@@ -130,6 +130,34 @@ export class AuthService {
   }
 
   /**
+   * Basic email validation.
+   */
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  async forgotPassword(email: string) {
+    if (!email || email.trim() === '') {
+      throw AppError.badRequest('Email tidak boleh kosong');
+    }
+
+    if (!this.isValidEmail(email)) {
+      throw AppError.badRequest('Email tidak valid');
+    }
+
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email.trim());
+
+    if (error) {
+      throw AppError.badRequest(error.message);
+    }
+
+    return {
+      message: 'Link reset password telah dikirim',
+    };
+  }
+
+  /**
    * Sign in with Google ID token.
    */
   async googleSignIn(idToken: string) {

@@ -51,6 +51,20 @@ export class AuthController {
     }
   }
 
+  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      const result = await authService.forgotPassword(email);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async me(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user } = req as AuthenticatedRequest;

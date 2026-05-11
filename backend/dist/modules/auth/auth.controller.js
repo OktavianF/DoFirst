@@ -81,6 +81,26 @@ class AuthController {
             next(err);
         }
     }
+    async refresh(req, res, next) {
+        try {
+            const { refreshToken } = req.body;
+            if (!refreshToken) {
+                res.status(400).json({
+                    success: false,
+                    error: 'refreshToken is required',
+                });
+                return;
+            }
+            const result = await authService.refreshSession(refreshToken);
+            res.json({
+                success: true,
+                data: result,
+            });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
 }
 exports.AuthController = AuthController;
 //# sourceMappingURL=auth.controller.js.map

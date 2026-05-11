@@ -25,6 +25,9 @@ export declare class TaskRepository {
         score: number;
         priority: string;
         deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
         tags: string[];
     }>;
     findAllByUser(userId: string): Promise<{
@@ -40,6 +43,45 @@ export declare class TaskRepository {
         score: number;
         priority: string;
         deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
+        tags: string[];
+    }[]>;
+    findActiveByUser(userId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        title: string;
+        description: string | null;
+        importance: number;
+        difficulty: number;
+        urgency: number;
+        score: number;
+        priority: string;
+        deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
+        tags: string[];
+    }[]>;
+    findCompletedByUser(userId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        title: string;
+        description: string | null;
+        importance: number;
+        difficulty: number;
+        urgency: number;
+        score: number;
+        priority: string;
+        deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
         tags: string[];
     }[]>;
     findById(id: string, userId: string): Promise<{
@@ -55,10 +97,15 @@ export declare class TaskRepository {
         score: number;
         priority: string;
         deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
         tags: string[];
     } | null>;
+    completeTask(id: string, userId: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
     delete(id: string, userId: string): Promise<import(".prisma/client").Prisma.BatchPayload>;
     countByUser(userId: string): Promise<number>;
+    countHighPriorityIncompleteByUser(userId: string): Promise<number>;
     getTopTask(userId: string): Promise<{
         id: string;
         createdAt: Date;
@@ -72,6 +119,9 @@ export declare class TaskRepository {
         score: number;
         priority: string;
         deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
         tags: string[];
     } | null>;
     getUpcomingTasks(userId: string, limit?: number): Promise<{
@@ -87,6 +137,9 @@ export declare class TaskRepository {
         score: number;
         priority: string;
         deadline: Date | null;
+        isCompleted: boolean;
+        completedAt: Date | null;
+        focusDuration: number | null;
         tags: string[];
     }[]>;
 }

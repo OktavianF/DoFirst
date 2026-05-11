@@ -25,9 +25,30 @@ class TaskRepository {
             orderBy: { score: 'desc' },
         });
     }
+    async findActiveByUser(userId) {
+        return prisma_1.prisma.task.findMany({
+            where: { userId, isCompleted: false },
+            orderBy: { score: 'desc' },
+        });
+    }
+    async findCompletedByUser(userId) {
+        return prisma_1.prisma.task.findMany({
+            where: { userId, isCompleted: true },
+            orderBy: { completedAt: 'desc' },
+        });
+    }
     async findById(id, userId) {
         return prisma_1.prisma.task.findFirst({
             where: { id, userId },
+        });
+    }
+    async completeTask(id, userId) {
+        return prisma_1.prisma.task.updateMany({
+            where: { id, userId },
+            data: {
+                isCompleted: true,
+                completedAt: new Date(),
+            },
         });
     }
     async delete(id, userId) {
@@ -38,6 +59,11 @@ class TaskRepository {
     async countByUser(userId) {
         return prisma_1.prisma.task.count({
             where: { userId },
+        });
+    }
+    async countHighPriorityIncompleteByUser(userId) {
+        return prisma_1.prisma.task.count({
+            where: { userId, priority: 'HIGH', isCompleted: false },
         });
     }
     async getTopTask(userId) {

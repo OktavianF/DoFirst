@@ -1,5 +1,6 @@
 import { app } from './app';
 import { env } from './config/env';
+import './modules/tasks/task.notification';
 
 const PORT = env.PORT;
 

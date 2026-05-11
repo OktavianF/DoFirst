@@ -61,4 +61,53 @@ export class TaskController {
       next(err);
     }
   }
+
+  async notifications(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      const tasks = await taskService.getUpcomingDeadlineTasks(user.id);
+
+      res.json({
+        success: true,
+        data: tasks,
+        count: tasks.length,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user } = req as AuthenticatedRequest;
+
+      const taskId = req.params.id as string;
+
+      const task = await taskService.updateTask(user.id, taskId, req.body);
+
+      res.json({
+        success: true,
+        data: task,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { user } = req as AuthenticatedRequest;
+
+    const taskId = req.params.id as string;
+
+    const result = await taskService.deleteTask(user.id, taskId);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 }

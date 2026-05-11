@@ -1,14 +1,36 @@
 export declare class DashboardService {
-    /**
-     * Get aggregated dashboard data for the home page:
-     * - User's name
-     * - Total tasks count
-     * - Hero task (highest scored task)
-     * - Upcoming tasks (next 3 after hero)
-     */
     getDashboard(userId: string): Promise<{
+        summary: {
+            totalTasks: number;
+            completedTasks: number;
+            highPriorityTasks: number;
+        };
+        stats: {
+            tasksPerWeek: {
+                date: string;
+                count: number;
+            }[];
+            averageFocus: number;
+        };
+        history: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            title: string;
+            description: string | null;
+            importance: number;
+            difficulty: number;
+            urgency: number;
+            score: number;
+            priority: string;
+            deadline: Date | null;
+            isCompleted: boolean;
+            completedAt: Date | null;
+            focusDuration: number | null;
+            tags: string[];
+        }[];
         userName: string;
-        totalTasks: number;
         heroTask: {
             id: string;
             title: string;

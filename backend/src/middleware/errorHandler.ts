@@ -11,17 +11,15 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+
+  console.error("🔥 ERROR ASLI:", err); // WAJIB
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       success: false,
       error: err.message,
     });
     return;
-  }
-
-  // Log unexpected errors in development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Unexpected error:', err);
   }
 
   res.status(500).json({

@@ -52,6 +52,17 @@ export declare class AuthService {
         updatedAt: Date;
     }>;
     /**
+     * Refresh an expired session using a refresh token.
+     * Returns new access + refresh tokens.
+     */
+    refreshSession(refreshToken: string): Promise<{
+        session: {
+            accessToken: string;
+            refreshToken: string;
+            expiresAt: number | undefined;
+        };
+    }>;
+    /**
      * Sign in with Google ID token.
      */
     googleSignIn(idToken: string): Promise<{

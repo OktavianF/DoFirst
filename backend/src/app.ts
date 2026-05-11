@@ -5,6 +5,8 @@ import { errorHandler } from './middleware/errorHandler';
 import { authRoutes } from './modules/auth/auth.routes';
 import { taskRoutes } from './modules/tasks/task.routes';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
+import { profileRoutes } from './modules/profile/profile.routes';
+import './modules/tasks/task.notification';
 
 const app = express();
 
@@ -19,7 +21,7 @@ app.use(express.json());
 // Health Check
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'i<3nad', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ---------------------------------------------------------------------------
@@ -28,6 +30,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/profile', profileRoutes);
 
 // ---------------------------------------------------------------------------
 // Error Handling
