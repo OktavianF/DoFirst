@@ -6,6 +6,8 @@ class TaskInputViewModel extends ChangeNotifier {
   final TaskRepository _taskRepo = TaskRepository();
 
   String _title = '';
+  String _description = '';
+  String? _attachmentFileName;
   int _importance = 3;
   int _difficulty = 3;
   int _urgency = 3;
@@ -17,6 +19,8 @@ class TaskInputViewModel extends ChangeNotifier {
   DateTime? _customDeadlineDateTime;
 
   String get title => _title;
+  String get description => _description;
+  String? get attachmentFileName => _attachmentFileName;
   int get importance => _importance;
   int get difficulty => _difficulty;
   int get urgency => _urgency;
@@ -28,6 +32,21 @@ class TaskInputViewModel extends ChangeNotifier {
 
   void updateTitle(String value) {
     _title = value;
+    notifyListeners();
+  }
+
+  void updateDescription(String value) {
+    _description = value;
+    notifyListeners();
+  }
+
+  void updateAttachment(String? fileName) {
+    _attachmentFileName = fileName;
+    notifyListeners();
+  }
+
+  void clearAttachment() {
+    _attachmentFileName = null;
     notifyListeners();
   }
 
@@ -94,6 +113,7 @@ class TaskInputViewModel extends ChangeNotifier {
     try {
       await _taskRepo.createTask(
         title: _title,
+        description: _description.isNotEmpty ? _description : null,
         importance: _importance,
         difficulty: _difficulty,
         urgency: _urgency,

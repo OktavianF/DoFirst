@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/repositories/task_repository.dart';
+import '../../../../shared/services/focus_background_task.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../success/presentation/success_page.dart';
 import 'focus_session_view_model.dart';
@@ -44,6 +45,26 @@ class _FocusSessionContentBody extends StatefulWidget {
 }
 
 class _FocusSessionContentBodyState extends State<_FocusSessionContentBody> {
+  Future<void> _handleToggleTimer(FocusSessionViewModel viewModel) async {
+    // Toggle the timer
+    viewModel.toggleTimer();
+
+    // Start or stop background task monitoring
+    if (viewModel.isRunning) {
+      await FocusBackgroundTask.start();
+    } else {
+      await FocusBackgroundTask.stop();
+    }
+  }
+
+  Future<void> _handleStopTimer(FocusSessionViewModel viewModel) async {
+    // Stop background monitoring
+    await FocusBackgroundTask.stop();
+
+    // Stop the timer
+    viewModel.stopTimer();
+  }
+
   Future<void> _handleBackPressed(FocusSessionViewModel viewModel) async {
     final decision = viewModel.evaluateExitDecision();
 
@@ -374,7 +395,7 @@ class _FocusSessionContentBodyState extends State<_FocusSessionContentBody> {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: viewModel.toggleTimer,
+            onPressed: () => _handleToggleTimer(viewModel),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -394,7 +415,7 @@ class _FocusSessionContentBodyState extends State<_FocusSessionContentBody> {
         const SizedBox(width: 16),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: viewModel.stopTimer,
+            onPressed: () => _handleStopTimer(viewModel),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textPrimary,
               backgroundColor: AppColors.background,

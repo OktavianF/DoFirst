@@ -9,6 +9,8 @@ import '../../profile/presentation/profile_page.dart' show ProfilePage;
 import '../../history/presentation/history_page.dart';
 import '../../profile/presentation/profile_view_model.dart';
 import '../../tasks/presentation/task_list/task_list_page.dart';
+import '../../tasks/presentation/task_list/task_list_view_model.dart';
+import '../../tasks/presentation/task_input/task_input_page.dart';
 import 'package:dofirst/features/focus/presentation/focus_page.dart';
 import 'home_view_model.dart';
 
@@ -39,6 +41,8 @@ class _HomePageContentState extends State<_HomePageContent> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<HomeViewModel>();
+    final taskVm = context.watch<TaskListViewModel>();
+    final historyItems = _buildHistoryItems(vm, taskVm);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -61,8 +65,7 @@ class _HomePageContentState extends State<_HomePageContent> {
                       const SizedBox(height: 14),
                   _buildHistoryHeader(),
                       const SizedBox(height: 6),
-                      // Use upcomingTasks for history display, but show fallback sample
-                      ...(vm.upcomingTasks.isNotEmpty ? vm.upcomingTasks : _sampleHistory()).map(_buildHistoryTile),
+                      ...historyItems.map(_buildHistoryTile),
                   const SizedBox(height: 120),
                 ]),
               ),
@@ -124,7 +127,7 @@ class _HomePageContentState extends State<_HomePageContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'WELCOME BACK',
+          'WELCOME TO',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 11,
@@ -423,7 +426,7 @@ class _HomePageContentState extends State<_HomePageContent> {
         borderRadius: BorderRadius.circular(14),
       ),
       child: TextButton.icon(
-        onPressed: () {},
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TaskInputPage())),
         icon: const Icon(Icons.add, size: 18, color: Colors.white),
         label: const Text(
           'Add New Task',
@@ -524,14 +527,35 @@ class _HomePageContentState extends State<_HomePageContent> {
     );
   }
 
-  List<dynamic> _sampleHistory() {
-    final now = DateTime.now();
-    return [
-      UpcomingTask(id: 'h1', title: 'Finish PRD Draft', deadline: now.subtract(const Duration(hours: 3)), dotColor: const Color(0xFF1FBF75)),
-      UpcomingTask(id: 'h2', title: 'Client Feedback Review', deadline: now.subtract(const Duration(days: 1, hours: 4)), dotColor: const Color(0xFF1FBF75)),
-      UpcomingTask(id: 'h3', title: 'Weekly Team Sync', deadline: now.subtract(const Duration(days: 2)), dotColor: const Color(0xFF1FBF75)),
-      UpcomingTask(id: 'h4', title: 'Update Product Roadmap', deadline: now.subtract(const Duration(days: 3, hours: 2)), dotColor: const Color(0xFF1FBF75)),
-    ];
+  List<UpcomingTask> _buildHistoryItems(HomeViewModel homeVm, TaskListViewModel taskVm) {
+    if (taskVm.allTasks.isNotEmpty) {
+      return taskVm.allTasks
+          .take(4)
+          .map(
+            (task) => UpcomingTask(
+              id: task.id,
+              title: task.title,
+              deadline: task.deadline,
+              dotColor: _priorityColorFromTask(task.priority),
+            ),
+          )
+          .toList();
+    }
+
+    return homeVm.upcomingTasks.take(4).toList();
+  }
+
+  Color _priorityColorFromTask(String priority) {
+    switch (priority.toUpperCase()) {
+      case 'HIGH':
+        return const Color(0xFFBA1A1A);
+      case 'MEDIUM':
+        return const Color(0xFFF59E0B);
+      case 'LOW':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFF777587);
+    }
   }
 
   void _onBottomNavTap(BuildContext context, int index) {

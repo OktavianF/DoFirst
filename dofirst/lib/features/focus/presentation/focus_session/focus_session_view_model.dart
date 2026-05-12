@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../shared/services/focus_notification_service.dart';
 import '../../../../shared/services/user_preferences_service.dart';
@@ -9,6 +10,12 @@ enum FocusExitDecision { allow, warn, strictBlocked }
 class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
   static const int _defaultFocusMinutes = 25;
   static const int _defaultBreakMinutes = 5;
+  
+  // Keys for background state persistence
+  static const String _timerStateKey = 'focus_timer_state';
+  static const String _timerTargetKey = 'focus_timer_target';
+  static const String _timerIsBreakKey = 'focus_timer_is_break';
+  static const String _timerIsRunningKey = 'focus_timer_is_running';
 
   int _focusMinutes = _defaultFocusMinutes;
   int _breakMinutes = _defaultBreakMinutes;
@@ -50,6 +57,7 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _safeInitNotifications();
     _loadSavedPreferences();
+    _restoreTimerStateFromBackground();
   }
 
   Future<void> _safeInitNotifications() async {
@@ -94,6 +102,67 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (_) {
       // Ignore persistence failures and keep defaults.
+    }
+  }
+
+  /// Restore timer state from background execution
+  Future<void> _restoreTimerStateFromBackground() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final wasRunning = prefs.getBool(_timerIsRunningKey) ?? false;
+
+      if (!wasRunning) return;
+
+      final targetStr = prefs.getString(_timerTargetKey);
+      if (targetStr == null) return;
+
+      _targetEndAt = DateTime.parse(targetStr);
+      _isBreakMode = prefs.getBool(_timerIsBreakKey) ?? false;
+
+      // Recalculate remaining seconds based on target
+      _syncRemainingFromTarget();
+
+      if (_remainingSeconds <= 0) {
+        // Timer has already finished in the background
+        await _handlePeriodComplete();
+      } else {
+        // Restore timer as running
+        _isRunning = true;
+        notifyListeners();
+        _restartPeriodicTimer();
+      }
+    } catch (_) {
+      // Ignore restoration failures
+    }
+  }
+
+  /// Save timer state to SharedPreferences for background persistence
+  Future<void> _saveTimerState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (_isRunning && _targetEndAt != null) {
+        await prefs.setBool(_timerIsRunningKey, true);
+        await prefs.setString(_timerTargetKey, _targetEndAt!.toIso8601String());
+        await prefs.setBool(_timerIsBreakKey, _isBreakMode);
+      } else {
+        await prefs.setBool(_timerIsRunningKey, false);
+        await prefs.remove(_timerTargetKey);
+      }
+    } catch (_) {
+      // Ignore save failures
+    }
+  }
+
+  /// Clear saved timer state
+  Future<void> _clearTimerState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_timerIsRunningKey);
+      await prefs.remove(_timerTargetKey);
+      await prefs.remove(_timerIsBreakKey);
+    } catch (_) {
+      // Ignore clear failures
     }
   }
 
@@ -160,9 +229,18 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
     _timer?.cancel();
     _isRunning = true;
     _targetEndAt = DateTime.now().add(Duration(seconds: _remainingSeconds));
+    
+    // Save timer state for background persistence
+    unawaited(_saveTimerState());
+    
     WakelockPlus.enable();
     notifyListeners();
 
+    _restartPeriodicTimer();
+  }
+
+  /// Restart the periodic timer that ticks every second
+  void _restartPeriodicTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _syncRemainingFromTarget();
       if (_remainingSeconds <= 0) {
@@ -178,6 +256,10 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
     _syncRemainingFromTarget();
     _targetEndAt = null;
     _timer?.cancel();
+    
+    // Clear saved timer state
+    unawaited(_clearTimerState());
+    
     WakelockPlus.disable();
     notifyListeners();
   }
@@ -240,15 +322,22 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    if (_isRunning && _strictMode && (state == AppLifecycleState.inactive || state == AppLifecycleState.paused)) {
-      _strictStopTriggered = true;
-      stopTimer();
-      _notificationService
-          .notify(
-            title: 'Strict Mode Stopped Session',
-            body: 'Timer dihentikan karena aplikasi ditinggalkan saat strict mode aktif.',
-          )
-          .catchError((_) => null);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      if (_isRunning) {
+        // Save state before app goes to background
+        unawaited(_saveTimerState());
+        
+        if (_strictMode) {
+          _strictStopTriggered = true;
+          stopTimer();
+          _notificationService
+              .notify(
+                title: 'Strict Mode Stopped Session',
+                body: 'Timer dihentikan karena aplikasi ditinggalkan saat strict mode aktif.',
+              )
+              .catchError((_) => null);
+        }
+      }
     }
   }
 
@@ -258,6 +347,7 @@ class FocusSessionViewModel extends ChangeNotifier with WidgetsBindingObserver {
     _timer?.cancel();
     _targetEndAt = null;
     WakelockPlus.disable();
+    _clearTimerState().catchError((_) => null);
     super.dispose();
   }
 }

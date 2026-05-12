@@ -80,6 +80,7 @@ class TaskListViewModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  List<TaskItem> get allTasks => List.unmodifiable(_allTasks);
 
   TaskListViewModel() {
     _loadFromCache().then((_) => loadTasks());

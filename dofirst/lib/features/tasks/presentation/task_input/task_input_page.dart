@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../home/presentation/home_view_model.dart';
 import '../../../profile/presentation/profile_view_model.dart';
@@ -175,7 +176,128 @@ fontSize: 18,
                       ],
                     ),
                     const SizedBox(height: 24),
-
+                    // ATTACHMENTS section
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4.0, bottom: 16.0),
+                      child: Text(
+                        'ATTACHMENTS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF777587),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles();
+                          if (result != null && result.files.isNotEmpty) {
+                            viewModel.updateAttachment(result.files.single.name);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF3F4F5),
+                          foregroundColor: const Color(0xFF4F46E5),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.attach_file, size: 18),
+                        label: const Text('Choose File', style: TextStyle(fontSize: 14)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (viewModel.attachmentFileName != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8E7FF),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.description, size: 16, color: Color(0xFF4F46E5)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                viewModel.attachmentFileName!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF4F46E5),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => viewModel.clearAttachment(),
+                              child: const Icon(Icons.close, size: 16, color: Color(0xFF4F46E5)),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'No file chosen',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF777587),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 32),
+                    // DESCRIPTION section
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4.0, bottom: 16.0),
+                      child: Text(
+                        'DESCRIPTION',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF777587),
+                        ),
+                      ),
+                    ),
+                    TextField(
+                      onChanged: viewModel.updateDescription,
+                      maxLines: 4,
+                      maxLength: 500,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF191C1D),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Add details about your task... (optional)',
+                        hintStyle: TextStyle(
+                          color: const Color(0xFF777587).withValues(alpha: 0.5),
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        counterStyle: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF777587),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

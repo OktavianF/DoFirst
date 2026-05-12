@@ -9,6 +9,7 @@ class UserPreferencesService {
   static const String _enableVibrationKey = 'focus_session_enable_vibration';
   static const String _autoStartNextSessionKey = 'focus_session_auto_start_next';
   static const String _autoStartBreakKey = 'focus_session_auto_start_break';
+  static const String _selectedAlarmKey = 'focus_session_selected_alarm';
 
   static Future<String?> getProfileDisplayName() async {
     final prefs = await SharedPreferences.getInstance();
@@ -97,6 +98,18 @@ class UserPreferencesService {
   static Future<void> saveAutoStartBreak(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_autoStartBreakKey, value);
+  }
+
+  /// Get selected alarm sound type (default: 'alarm')
+  static Future<String> getSelectedAlarm() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedAlarmKey) ?? 'alarm';
+  }
+
+  /// Save selected alarm sound type
+  static Future<void> saveSelectedAlarm(String alarmType) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedAlarmKey, alarmType);
   }
 
   static Future<void> clearProfileOverrides() async {

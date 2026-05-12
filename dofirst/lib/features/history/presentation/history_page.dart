@@ -4,6 +4,7 @@ import 'package:dofirst/features/home/presentation/home_view_model.dart';
 import 'package:dofirst/features/profile/presentation/profile_page.dart' show ProfilePage;
 import 'package:dofirst/features/profile/presentation/profile_view_model.dart';
 import 'package:dofirst/features/tasks/presentation/task_list/task_list_page.dart';
+import 'package:dofirst/features/tasks/presentation/task_list/task_list_view_model.dart';
 import 'package:dofirst/shared/navigation/no_transition_route.dart';
 import 'package:dofirst/shared/widgets/app_avatar.dart';
 import 'package:dofirst/shared/widgets/app_bottom_nav_bar.dart';
@@ -26,6 +27,7 @@ class _HistoryPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
+    final taskViewModel = context.watch<TaskListViewModel>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,7 +60,7 @@ class _HistoryPageContent extends StatelessWidget {
                         delegate: SliverChildListDelegate([
                           _buildHistoryTitle(),
                           const SizedBox(height: 16.0),
-                          _buildHistoryList(viewModel),
+                          _buildHistoryList(viewModel, taskViewModel),
                           const SizedBox(height: 32.0),
                         ]),
                       ),
@@ -126,21 +128,10 @@ class _HistoryPageContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // DoFirst logo on the left
-          Image.asset(
-            'assets/images/logo.png',
-            width: 160,
-            height: 72,
-            fit: BoxFit.contain,
-            errorBuilder: (c, e, s) => const Text(
-              'DoFirst',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2F80ED),
-                height: 1,
-              ),
-            ),
+          // Back button on the left
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF667085)),
           ),
           GestureDetector(
             onTap: () => _onBottomNavTap(context, viewModel, 3),
@@ -162,63 +153,45 @@ class _HistoryPageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryList(HomeViewModel viewModel) {
-    // Sample history data
-    final historyItems = [
-      HistoryItem(
-        title: 'Finish PRD Draft',
-        time: 'Today 2:30 PM',
-      ),
-      HistoryItem(
-        title: 'Client Feedback Review',
-        time: 'Yesterday 2:00',
-      ),
-      HistoryItem(
-        title: 'Weekly Team Sync',
-        time: 'Mon 10:00 AM',
-      ),
-      HistoryItem(
-        title: 'Update Product Roadmap',
-        time: 'Tue 6:30 PM',
-      ),
-      HistoryItem(
-        title: 'Finish PRD Draft',
-        time: 'Today 2:30 PM',
-      ),
-      HistoryItem(
-        title: 'Client Feedback Review',
-        time: 'Yesterday 2:00',
-      ),
-      HistoryItem(
-        title: 'Weekly Team Sync',
-        time: 'Mon 10:00 AM',
-      ),
-      HistoryItem(
-        title: 'Update Product Roadmap',
-        time: 'Tue 6:30 PM',
-      ),
-      HistoryItem(
-        title: 'Finish PRD Draft',
-        time: 'Today 2:30 PM',
-      ),
-      HistoryItem(
-        title: 'Client Feedback Review',
-        time: 'Yesterday 2:00',
-      ),
-      HistoryItem(
-        title: 'Weekly Team Sync',
-        time: 'Mon 10:00 AM',
-      ),
-      HistoryItem(
-        title: 'Update Product Roadmap',
-        time: 'Tue 6:30 PM',
-      ),
-    ];
+  Widget _buildHistoryList(HomeViewModel homeViewModel, TaskListViewModel taskViewModel) {
+    final taskItems = taskViewModel.allTasks
+        .map(
+          (task) => HistoryItem(
+            title: task.title,
+            time: task.timeText,
+            iconColor: _priorityColor(task.priority),
+          ),
+        )
+        .toList();
+
+    final fallbackItems = homeViewModel.upcomingTasks
+        .map(
+          (task) => HistoryItem(
+            title: task.title,
+            time: task.time,
+            iconColor: task.dotColor,
+          ),
+        )
+        .toList();
+
+    final historyItems = taskItems.isNotEmpty ? taskItems : fallbackItems;
+
+    if (historyItems.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.0),
+        child: Text(
+          'No tasks yet',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF777587),
+          ),
+        ),
+      );
+    }
 
     return Column(
-      children: historyItems.map((item) {
-        return _buildHistoryItem(item);
-      }).toList(),
+      children: historyItems.map(_buildHistoryItem).toList(),
     );
   }
 
@@ -233,10 +206,10 @@ class _HistoryPageContent extends StatelessWidget {
       child: Row(
         children: [
           // Green checkmark icon
-          const Icon(
+          Icon(
             Icons.check_circle,
             size: 24,
-            color: Color(0xFF1ABC9C),
+            color: item.iconColor,
           ),
           const SizedBox(width: 16.0),
           // Task info
@@ -273,14 +246,29 @@ class _HistoryPageContent extends StatelessWidget {
       ),
     );
   }
+
+  Color _priorityColor(String priority) {
+    switch (priority.toUpperCase()) {
+      case 'HIGH':
+        return const Color(0xFFBA1A1A);
+      case 'MEDIUM':
+        return const Color(0xFFF59E0B);
+      case 'LOW':
+        return const Color(0xFF1ABC9C);
+      default:
+        return const Color(0xFF777587);
+    }
+  }
 }
 
 class HistoryItem {
   final String title;
   final String time;
+  final Color iconColor;
 
   HistoryItem({
     required this.title,
     required this.time,
+    required this.iconColor,
   });
 }
