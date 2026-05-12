@@ -74,8 +74,8 @@ class SignupViewModel extends ChangeNotifier {
       _errorMessage = e.message;
       return false;
     } catch (e, stacktrace) {
-      print('Google sign in error: $e');
-      print('Stacktrace: $stacktrace');
+      debugPrint('Google sign in error: $e');
+      debugPrint('Stacktrace: $stacktrace');
       _errorMessage = 'Google sign-in failed: $e';
       return false;
     } finally {

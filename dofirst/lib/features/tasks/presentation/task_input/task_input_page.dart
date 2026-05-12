@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../home/presentation/home_view_model.dart';
 import '../../../profile/presentation/profile_view_model.dart';
 import '../task_list/task_list_view_model.dart';
-import '../../../../shared/theme/app_theme.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import 'task_input_view_model.dart';
 
 class TaskInputPage extends StatelessWidget {

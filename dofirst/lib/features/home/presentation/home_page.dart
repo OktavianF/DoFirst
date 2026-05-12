@@ -1,24 +1,22 @@
-import 'dart:async';
-import 'package:dofirst/features/focus/presentation/focus_session/focus_session_page.dart';
-import 'package:dofirst/features/profile/presentation/profile_page.dart';
-import 'package:dofirst/features/profile/presentation/profile_view_model.dart';
-import 'package:dofirst/features/tasks/presentation/task_list/task_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../shared/widgets/app_avatar.dart';
+import '../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../shared/navigation/no_transition_route.dart';
 import '../../../shared/theme/app_theme.dart';
-import '../../../shared/widgets/app_bottom_nav_bar.dart';
-import '../../notifications/presentation/notifications_page.dart';
+import '../../profile/presentation/profile_page.dart' show ProfilePage;
+import '../../history/presentation/history_page.dart';
+import '../../profile/presentation/profile_view_model.dart';
+import '../../tasks/presentation/task_list/task_list_page.dart';
+import 'package:dofirst/features/focus/presentation/focus_page.dart';
 import 'home_view_model.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _HomePageContent();
-  }
+  Widget build(BuildContext context) => const _HomePageContent();
 }
 
 class _HomePageContent extends StatefulWidget {
@@ -29,56 +27,44 @@ class _HomePageContent extends StatefulWidget {
 }
 
 class _HomePageContentState extends State<_HomePageContent> {
-  /// Timer that ticks every minute to update deadline countdowns in realtime
-  Timer? _countdownTimer;
-
   @override
   void initState() {
     super.initState();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 60), (_) {
-      if (mounted) {
-        context.read<HomeViewModel>().refreshCountdowns();
-      }
+    // Ensure dashboard is loaded when page mounts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeViewModel>().loadDashboard();
     });
   }
 
   @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<HomeViewModel>();
+    final vm = context.watch<HomeViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            _buildTopNavigationBar(context),
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 16.0,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        // _buildHeaderSection(viewModel),
-                        // const SizedBox(height: 32.0),
-                        _buildHeroTaskSection(context, viewModel),
-                        const SizedBox(height: 32.0),
-                        _buildUpNextSection(context, viewModel),
-                        const SizedBox(height: 32.0),
-                      ]),
-                    ),
-                  ),
-                ],
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildTopBar(context)),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildWelcomeSection(vm),
+                      const SizedBox(height: 12),
+                  _buildSmallStatsRow(vm),
+                      const SizedBox(height: 14),
+                  _buildBigCardsRow(vm),
+                      const SizedBox(height: 14),
+                  _buildAddTaskButton(),
+                      const SizedBox(height: 14),
+                  _buildHistoryHeader(),
+                      const SizedBox(height: 6),
+                      // Use upcomingTasks for history display, but show fallback sample
+                      ...(vm.upcomingTasks.isNotEmpty ? vm.upcomingTasks : _sampleHistory()).map(_buildHistoryTile),
+                  const SizedBox(height: 120),
+                ]),
               ),
             ),
           ],
@@ -86,30 +72,12 @@ class _HomePageContentState extends State<_HomePageContent> {
       ),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: 0,
-        onTap: (index) => _onBottomNavTap(context, viewModel, index),
+        onTap: (index) => _onBottomNavTap(context, index),
       ),
     );
   }
 
-  void _onBottomNavTap(
-    BuildContext context,
-    HomeViewModel viewModel,
-    int index,
-  ) {
-    if (index == 0) {
-      return;
-    } else if (index == 1) {
-      pushReplacementNoTransition(context, const TaskListPage());
-    } else {
-      pushReplacementNoTransition(context, const ProfilePage());
-    }
-  }
-
-  void _openFocusSession(BuildContext context, String taskName, String? taskId) {
-    pushNoTransition(context, FocusSessionPage(taskName: taskName, taskId: taskId));
-  }
-
-  Widget _buildTopNavigationBar(BuildContext context) {
+  Widget _buildTopBar(BuildContext context) {
     final profileVm = context.watch<ProfileViewModel>();
     final initial = profileVm.fullName.isNotEmpty
         ? profileVm.fullName[0].toUpperCase()
@@ -121,497 +89,464 @@ class _HomePageContentState extends State<_HomePageContent> {
       alignment: Alignment.center,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/logo.png',
-            width: 96,
-            height: 54,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.broken_image, size: 54),
-          ),
+          Image.asset('assets/images/logo.png', width: 96, height: 54, fit: BoxFit.contain,
+              errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 54)),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                key: const Key('home_notifications_button'),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(
-                  Icons.notifications_none,
-                  size: 28,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsPage(),
-                    ),
-                  );
-                },
+                icon: const Icon(Icons.notifications_none, size: 28, color: Colors.grey),
+                onPressed: () {},
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               InkWell(
-                key: const Key('home_profile_button'),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfilePage()),
-                  );
-                },
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfilePage())),
                 customBorder: const CircleBorder(),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFE2DFFF),
-                      width: 4.0,
-                    ),
-                    color: Colors.grey[300],
-                  ),
-                  child: ClipOval(
-                    child: profileVm.avatarUrl != null
-                        ? Image.network(
-                            profileVm.avatarUrl!,
-                            width: 34,
-                            height: 34,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _buildAvatarFallback(initial),
-                          )
-                        : _buildAvatarFallback(initial),
-                  ),
+                child: AppAvatar(
+                  source: profileVm.avatarUrl,
+                  fallbackText: initial,
+                  size: 34,
+                  borderWidth: 4,
                 ),
               ),
             ],
-          ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildAvatarFallback(String initial) {
+  Widget _buildWelcomeSection(HomeViewModel vm) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'WELCOME BACK',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 1.1,
+            color: Color(0xFF8A8A9D),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Good morning,',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF141420).withValues(alpha: 0.92),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          vm.userName.isNotEmpty ? vm.userName : 'Nadhia',
+          style: const TextStyle(
+            fontSize: 30,
+            height: 1.05,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF141420),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Dashboard',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF141420),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmallStatsRow(HomeViewModel vm) {
+    Widget chip({
+      required String label,
+      required String value,
+      required String caption,
+      required Color iconColor,
+      required IconData icon,
+    }) {
+      return Container(
+            padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+                  width: 24,
+                  height: 24,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+                  child: Icon(icon, size: 14, color: iconColor),
+            ),
+                const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                    fontSize: 10,
+                color: Color(0xFF7E7E8D),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                    fontSize: 20,
+                height: 1.0,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF141420),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              caption,
+              style: const TextStyle(
+                    fontSize: 9,
+                color: Color(0xFF9A9AAC),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final highPriorityCount = vm.upcomingTasks
+        .where((task) => task.dotColor == const Color(0xFFBA1A1A) || task.dotColor == const Color(0xFFF59E0B))
+        .length;
+
+    return Row(
+      children: [
+        Expanded(
+          child: chip(
+            label: 'Total Tasks',
+            value: vm.totalTasks.toString(),
+            caption: 'All tasks',
+            iconColor: const Color(0xFF6F63FF),
+            icon: Icons.list_alt_rounded,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: chip(
+            label: 'High Priority',
+            value: highPriorityCount.toString(),
+            caption: 'Needs attention',
+            iconColor: const Color(0xFFFF6B6B),
+            icon: Icons.priority_high_rounded,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: chip(
+            label: 'Completed',
+            value: vm.tasksDone.toString(),
+            caption: 'Tasks',
+            iconColor: const Color(0xFF1FBF75),
+            icon: Icons.check_circle_outline_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBigCardsRow(HomeViewModel vm) {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 156,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF5E4BFF), Color(0xFF4438F3)],
+            ),
+                borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF5E4BFF).withValues(alpha: 0.18),
+                    blurRadius: 20,
+                    offset: const Offset(0, 9),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: const [
+                            Icon(Icons.check_circle_outline_rounded, size: 16, color: Colors.white),
+                            SizedBox(width: 5),
+                        Text(
+                          'TASKS DONE',
+                          style: TextStyle(
+                            color: Colors.white,
+                                fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                        const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          vm.tasksDone.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                                fontSize: 42,
+                            height: 0.95,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                            const SizedBox(width: 8),
+                        const Padding(
+                              padding: EdgeInsets.only(bottom: 7),
+                          child: Text(
+                            'this week',
+                            style: TextStyle(
+                              color: Colors.white70,
+                                  fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 94,
+                height: 94,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.78),
+                      const Color(0xFF8A6DFF).withValues(alpha: 0.45),
+                      const Color(0xFF3B2CE6).withValues(alpha: 0.15),
+                    ],
+                    stops: const [0.0, 0.58, 1.0],
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                        size: 60,
+                    color: Color(0xFFEDEBFF),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 96,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 5))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'AVERAGE FOCUS',
+                        style: TextStyle(
+                          color: Color(0xFF7E7E8D),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        '3.5h per day',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: Color(0xFF141420),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildAddTaskButton() {
     return Container(
-      width: 34,
-      height: 34,
-      alignment: Alignment.center,
-      color: const Color(0xFFE2DFFF),
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF0F0069),
+      width: double.infinity,
+      height: 46,
+      decoration: BoxDecoration(
+        color: const Color(0xFF4D37F5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: TextButton.icon(
+        onPressed: () {},
+        icon: const Icon(Icons.add, size: 18, color: Colors.white),
+        label: const Text(
+          'Add New Task',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+                fontSize: 13,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeaderSection(HomeViewModel viewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHistoryHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'WELCOME BACK',
+        const Text(
+          'History',
           style: TextStyle(
-fontWeight: FontWeight.w400,
-            fontSize: 12.0,
-            letterSpacing: 2.4,
-            color: const Color(0xFF777587),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF141420),
           ),
         ),
-        const SizedBox(height: 8.0),
-        Text(
-          'Good morning,\n${viewModel.userName}',
-          style: const TextStyle(
-fontWeight: FontWeight.bold,
-            fontSize: 36.0,
-            color: Color(0xFF191C1D),
-            height: 1.1,
-            letterSpacing: -0.9,
-          ),
-        ),
-        const SizedBox(height: 16.0),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F5),
-            borderRadius: BorderRadius.circular(24.0),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 16.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TASKS DONE',
-                      style: TextStyle(
-fontWeight: FontWeight.bold,
-                        fontSize: 10.0,
-                        letterSpacing: 1.0,
-                        color: const Color(0xFF777587),
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${viewModel.tasksDone} ',
-                          style: const TextStyle(
-fontWeight: FontWeight.w800,
-                            fontSize: 24.0,
-                            color: Color(0xFF191C1D),
-                          ),
-                        ),
-                        Text(
-                          '/ ${viewModel.totalTasks}',
-                          style: TextStyle(
-fontWeight: FontWeight.w500,
-                            fontSize: 14.0,
-                            color: const Color(0xFF777587),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        TextButton(
+          onPressed: () {
+            debugPrint('HomePage: History View All pressed, navigating to HistoryPage');
+            pushNoTransition(context, const HistoryPage());
+          },
+          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+          child: const Text(
+            'View All',
+            style: TextStyle(
+              color: Color(0xFF4D37F5),
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeroTaskSection(BuildContext context, HomeViewModel viewModel) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 10.0),
-          padding: const EdgeInsets.all(33.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(32.0),
-            border: Border.all(
-              color: const Color(0xFFC7C4D8).withValues(alpha: 0.1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF191C1D).withValues(alpha: 0.06),
-                offset: const Offset(0, 20),
-                blurRadius: 40.0,
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          viewModel.heroTaskTitle,
-                          style: const TextStyle(
-fontWeight: FontWeight.bold,
-                            fontSize: 30.0,
-                            color: Color(0xFF191C1D),
-                            height: 1.25,
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.schedule,
-                              size: 16,
-                              color: Color(0xFF464555),
-                            ),
-                            const SizedBox(width: 6.0),
-                            Flexible(
-                              child: Text(
-                                viewModel.heroTaskTime,
-                                style: const TextStyle(
-fontWeight: FontWeight.normal,
-                                  fontSize: 16.0,
-                                  color: Color(0xFF464555),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        viewModel.heroTaskScore.toString(),
-                        style: const TextStyle(
-fontWeight: FontWeight.w800,
-                          fontSize: 36.0,
-                          letterSpacing: -1.8,
-                          color: Color(0xFF3525CD),
-                        ),
-                      ),
-                      Text(
-                        'SCORE',
-                        style: TextStyle(
-fontWeight: FontWeight.bold,
-                          fontSize: 10.0,
-                          letterSpacing: 1.0,
-                          color: const Color(0xFF777587),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24.0),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                children: viewModel.heroTaskTags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE7E8E9),
-                      borderRadius: BorderRadius.circular(9999.0),
-                    ),
-                    child: Text(
-                      tag.toUpperCase(),
-                      style: const TextStyle(
-fontWeight: FontWeight.bold,
-                        fontSize: 10.0,
-                        letterSpacing: 0.5,
-                        color: Color(0xFF464555),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24.0),
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3525CD), Color(0xFF4F46E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3525CD).withValues(alpha: 0.2),
-                      offset: const Offset(0, 20),
-                      blurRadius: 25.0,
-                      spreadRadius: -5.0,
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    key: const Key('start_now_button'),
-                    borderRadius: BorderRadius.circular(24.0),
-                    onTap: () =>
-                        _openFocusSession(context, viewModel.heroTaskTitle, viewModel.heroTaskId),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Start Now',
-                            style: TextStyle(
-fontWeight: FontWeight.bold,
-                              fontSize: 18.0,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          top: -2.0,
-          left: 24.0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
-            ),
+  Widget _buildHistoryTile(dynamic task) {
+    return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.025), blurRadius: 8, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
-              color: const Color(0xFFAB373B),
-              borderRadius: BorderRadius.circular(9999.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  offset: const Offset(0, 10),
-                  blurRadius: 15.0,
-                  spreadRadius: -3.0,
+              color: task.dotColor.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.check_rounded,
+              size: 15,
+              color: task.dotColor,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Color(0xFF1F1F2D),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  task.time,
+                  style: const TextStyle(
+                    color: Color(0xFF8A8A9D),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
-            child: const Text(
-              'HIGHEST PRIORITY',
-              style: TextStyle(
-fontWeight: FontWeight.bold,
-                fontSize: 10.0,
-                letterSpacing: 1.0,
-                color: Colors.white,
-              ),
-            ),
           ),
-        ),
-      ],
+          const Icon(Icons.chevron_right, color: Color(0xFFC7C4D8)),
+        ],
+      ),
     );
   }
 
-  Widget _buildUpNextSection(BuildContext context, HomeViewModel viewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Up Next',
-                style: TextStyle(
-fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: Color(0xFF191C1D),
-                ),
-              ),
-              TextButton(
-                key: const Key('view_all_tasks_button'),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const TaskListPage()),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'View All',
-                  style: TextStyle(
-fontWeight: FontWeight.w600,
-                    fontSize: 14.0,
-                    color: const Color(0xFF3525CD),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16.0),
-        Column(
-          children: viewModel.upcomingTasks.map((task) {
-            return InkWell(
-              onTap: () => _openFocusSession(context, task.title, task.id),
-              borderRadius: BorderRadius.circular(24.0),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12.0),
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F5),
-                  borderRadius: BorderRadius.circular(24.0),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: task.dotColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 16.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            task.title,
-                            style: const TextStyle(
-fontWeight: FontWeight.w600,
-                              fontSize: 14.0,
-                              color: Color(0xFF191C1D),
-                            ),
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            task.time,
-                            style: TextStyle(
-fontWeight: FontWeight.normal,
-                              fontSize: 12.0,
-                              color: const Color(0xFF777587),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.0),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.chevron_right,
-                        color: Color(0xFFC7C4D8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
+  List<dynamic> _sampleHistory() {
+    final now = DateTime.now();
+    return [
+      UpcomingTask(id: 'h1', title: 'Finish PRD Draft', deadline: now.subtract(const Duration(hours: 3)), dotColor: const Color(0xFF1FBF75)),
+      UpcomingTask(id: 'h2', title: 'Client Feedback Review', deadline: now.subtract(const Duration(days: 1, hours: 4)), dotColor: const Color(0xFF1FBF75)),
+      UpcomingTask(id: 'h3', title: 'Weekly Team Sync', deadline: now.subtract(const Duration(days: 2)), dotColor: const Color(0xFF1FBF75)),
+      UpcomingTask(id: 'h4', title: 'Update Product Roadmap', deadline: now.subtract(const Duration(days: 3, hours: 2)), dotColor: const Color(0xFF1FBF75)),
+    ];
   }
+
+  void _onBottomNavTap(BuildContext context, int index) {
+    if (index == 0) return;
+    if (index == 1) {
+      pushReplacementNoTransition(context, const FocusPage());
+      return;
+    }
+    if (index == 2) {
+      pushReplacementNoTransition(context, const TaskListPage());
+      return;
+    }
+    pushReplacementNoTransition(context, const ProfilePage());
+  }
+
 }
+
+

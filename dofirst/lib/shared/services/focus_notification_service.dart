@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 
 /// Singleton service for focus session notifications and alert sounds.
 class FocusNotificationService {
@@ -15,17 +16,22 @@ class FocusNotificationService {
   Future<void> init() async {
     if (_initialized) return;
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
+    try {
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initSettings = InitializationSettings(android: androidSettings);
 
-    await _notifications.initialize(initSettings);
+      await _notifications.initialize(initSettings);
 
-    // Request notification permission on Android 13+
-    await _notifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+      // Request notification permission on Android 13+
+      await _notifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
 
-    _initialized = true;
+      _initialized = true;
+    } catch (_) {
+      // In widget tests / unsupported platforms, notification plugin may be absent.
+      _initialized = false;
+    }
   }
 
   /// Show a notification popup AND play an alert sound.
@@ -48,12 +54,23 @@ class FocusNotificationService {
 
     const details = NotificationDetails(android: androidDetails);
 
-    await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // unique ID
-      title,
-      body,
-      details,
-    );
+    try {
+      await _notifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000, // unique ID
+        title,
+        body,
+        details,
+      );
+    } catch (_) {
+      // Ignore when platform notifications are unavailable.
+    }
+
+    // Alarm fallback that works without bundled assets
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+    } catch (_) {
+      // Ignore if platform doesn't support system alert sound.
+    }
 
     // Play alert sound using system notification ringtone
     try {

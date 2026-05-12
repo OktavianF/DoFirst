@@ -104,8 +104,9 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Populate fields from dashboard data (used by both cache and API)
   void _populateFromData(Map<String, dynamic> data) {
-    _userName = data['userName'] as String? ?? 'User';
-    _totalTasks = data['totalTasks'] as int? ?? 0;
+    _userName = data['userName'] as String? ?? data['user_name'] as String? ?? 'User';
+    _totalTasks = (data['totalTasks'] as int?) ?? (data['total_tasks'] as int?) ?? 0;
+    _tasksDone = (data['completedTasks'] as int?) ?? (data['completed_tasks'] as int?) ?? 0;
 
     final hero = data['heroTask'] as Map<String, dynamic>?;
     if (hero != null) {

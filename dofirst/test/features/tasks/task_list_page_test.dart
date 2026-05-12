@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:dofirst/features/tasks/presentation/task_list/task_list_page.dart';
-import 'package:dofirst/features/tasks/presentation/task_list/task_list_view_model.dart';
 
 void main() {
   Widget createWidgetUnderTest() {

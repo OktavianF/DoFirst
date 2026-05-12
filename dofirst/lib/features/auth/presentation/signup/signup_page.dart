@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import 'package:dofirst/features/auth/presentation/login/login_page.dart';
+import 'package:dofirst/features/auth/presentation/login/login_page.dart' show LoginPage;
 import 'package:dofirst/features/auth/presentation/login/login_view_model.dart';
 import 'package:dofirst/features/auth/presentation/signup/signup_view_model.dart';
 import 'package:dofirst/features/home/presentation/home_page.dart';
@@ -132,6 +132,17 @@ class _SignupPageState extends State<SignupPage> {
                       context,
                     ).textTheme.headlineMedium?.copyWith(fontSize: 42),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 160,
+                    height: 72,
+                    fit: BoxFit.contain,
+                    errorBuilder: (c, e, s) => const Icon(
+                      Icons.broken_image,
+                      size: 56,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(

@@ -1,11 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const upload = multer({ storage: multer.memoryStorage() });
 
 const PORT = 3000;
+let completedTasks = 2;
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -56,8 +59,8 @@ app.get('/api/auth/me', (req, res) => {
 app.get('/api/dashboard', (req, res) => {
     res.json({
         data: {
-            total_tasks: 5,
-            completed_tasks: 2,
+            total_tasks: tasks.length + completedTasks,
+            completed_tasks: completedTasks,
             productivity_score: 85,
             recent_activities: []
         }
@@ -94,18 +97,32 @@ app.get('/api/tasks', (req, res) => {
     res.json({ data: tasks });
 });
 
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', upload.single('attachment'), (req, res) => {
+    const importance = Number(req.body.importance ?? 3);
+    const difficulty = Number(req.body.difficulty ?? 3);
+    const urgency = Number(req.body.urgency ?? 3);
+
+    const attachment = req.file
+        ? {
+            field: req.file.fieldname,
+            name: req.file.originalname,
+            mimeType: req.file.mimetype,
+            size: req.file.size,
+        }
+        : null;
+
     const newTask = {
         id: 't' + Date.now(),
         title: req.body.title,
         description: req.body.description,
         score: 7.5,
         priority: 'Medium',
-        importance: req.body.importance,
-        difficulty: req.body.difficulty,
-        urgency: req.body.urgency,
+        importance,
+        difficulty,
+        urgency,
         deadline: req.body.deadline,
-        tags: req.body.tags || []
+        tags: req.body.tags || [],
+        attachments: attachment ? [attachment] : []
     };
     tasks.push(newTask);
     res.json({ data: newTask });
@@ -122,6 +139,7 @@ app.get('/api/tasks/:id', (req, res) => {
 
 app.delete('/api/tasks/:id/complete', (req, res) => {
     tasks = tasks.filter(t => t.id !== req.params.id);
+    completedTasks += 1;
     res.json({ data: { success: true } });
 });
 

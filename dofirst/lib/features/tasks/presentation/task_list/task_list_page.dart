@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../home/presentation/home_page.dart';
-import '../../../profile/presentation/profile_page.dart';
+import '../../../focus/presentation/focus_page.dart';
+import '../../../profile/presentation/profile_page.dart' show ProfilePage;
 import '../../../profile/presentation/profile_view_model.dart';
 import '../../../../shared/navigation/no_transition_route.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../notifications/presentation/notifications_page.dart';
 import '../task_input/task_input_page.dart';
+import '../task_detail/task_detail_page.dart';
 import 'task_list_view_model.dart';
 
 class TaskListPage extends StatelessWidget {
@@ -107,7 +110,7 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
         ),
       ),
       bottomNavigationBar: AppBottomNavBar(
-        currentIndex: 1,
+        currentIndex: 2,
         onTap: (index) => _onBottomNavTap(context, index),
       ),
     );
@@ -115,11 +118,19 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
 
   void _onBottomNavTap(BuildContext context, int index) {
     if (index == 0) {
-      pushReplacementNoTransition(context, const HomePage());
+      pushReplacementNoTransition(context, HomePage());
+      return;
+    }
+    if (index == 1) {
+      pushReplacementNoTransition(context, FocusPage());
       return;
     }
     if (index == 2) {
-      pushReplacementNoTransition(context, const ProfilePage());
+      return;
+    }
+    if (index == 3) {
+      pushReplacementNoTransition(context, ProfilePage());
+      return;
     }
   }
 
@@ -172,51 +183,16 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
                   pushReplacementNoTransition(context, const ProfilePage());
                 },
                 customBorder: const CircleBorder(),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFE2DFFF),
-                      width: 4.0,
-                    ),
-                    color: Colors.grey[300],
-                  ),
-                  child: ClipOval(
-                    child: profileVm.avatarUrl != null
-                        ? Image.network(
-                            profileVm.avatarUrl!,
-                            width: 34,
-                            height: 34,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _buildAvatarFallback(initial),
-                          )
-                        : _buildAvatarFallback(initial),
-                  ),
+                child: AppAvatar(
+                  source: profileVm.avatarUrl,
+                  fallbackText: initial,
+                  size: 34,
+                  borderWidth: 4,
                 ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarFallback(String initial) {
-    return Container(
-      width: 34,
-      height: 34,
-      alignment: Alignment.center,
-      color: const Color(0xFFE2DFFF),
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF0F0069),
-        ),
       ),
     );
   }
@@ -404,7 +380,7 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 16.0),
           itemBuilder: (context, index) {
-            return _buildHighPriorityCard(tasks[index]);
+            return _buildHighPriorityCard(context, tasks[index]);
           },
         ),
       ],
@@ -430,7 +406,7 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12.0),
           itemBuilder: (context, index) {
-            return _buildMediumPriorityCard(tasks[index]);
+            return _buildMediumPriorityCard(context, tasks[index]);
           },
         ),
       ],
@@ -456,231 +432,247 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12.0),
           itemBuilder: (context, index) {
-            return _buildLowPriorityCard(tasks[index]);
+            return _buildLowPriorityCard(context, tasks[index]);
           },
         ),
       ],
     );
   }
 
-  Widget _buildHighPriorityCard(TaskItem task) {
+  Widget _buildHighPriorityCard(BuildContext context, TaskItem task) {
     // Alternate icon logic to match the design (e.g., Task 1 = priority_high, Task 2 = bolt)
     final bool isEmergency = task.title.toLowerCase().contains('emergency') || 
                              task.title.toLowerCase().contains('critical');
     
-    return Container(
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFFEDEEEF)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFBA1A1A).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Icon(
-                  isEmergency ? Icons.bolt : Icons.priority_high,
-                  color: const Color(0xFFBA1A1A),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFBA1A1A).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Text(
-                  'SCORE ${task.score}',
-                  style: const TextStyle(
-fontWeight: FontWeight.bold,
-                    fontSize: 10.0,
-                    color: Color(0xFFBA1A1A),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          Text(
-            task.title,
-            style: const TextStyle(
-fontWeight: FontWeight.bold,
-              fontSize: 16.0,
-              color: Color(0xFF191C1D),
-              height: 1.2,
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
+        );
+      },
+      borderRadius: BorderRadius.circular(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: const Color(0xFFEDEEEF)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 8.0),
-          if (task.description != null) ...[ 
-            Text(
-              task.description!,
-              style: const TextStyle(
-fontSize: 12.0,
-                color: Color(0xFF777587),
-              ),
-            ),
-            const SizedBox(height: 12.0),
           ],
-          if (task.description == null)
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.calendar_today, size: 14, color: Color(0xFF777587)),
-                const SizedBox(width: 4),
-                Text(
-                  task.timeText,
-                  style: const TextStyle(
-fontSize: 12.0,
-                    color: Color(0xFF777587),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBA1A1A).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Icon(
+                    isEmergency ? Icons.bolt : Icons.priority_high,
+                    color: const Color(0xFFBA1A1A),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBA1A1A).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Text(
+                    'SCORE ${task.score}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.0,
+                      color: Color(0xFFBA1A1A),
+                    ),
                   ),
                 ),
               ],
-            )
-          else
+            ),
+            const SizedBox(height: 16.0),
             Text(
-              task.timeText.toUpperCase(),
+              task.title,
               style: const TextStyle(
-fontWeight: FontWeight.bold,
-                fontSize: 10.0,
-                color: Color(0xFFBA1A1A),
+                fontWeight: FontWeight.bold,
+                fontSize: 16.0,
+                color: Color(0xFF191C1D),
+                height: 1.2,
               ),
             ),
-        ],
+            const SizedBox(height: 8.0),
+            if (task.description != null) ...[
+              Text(
+                task.description!,
+                style: const TextStyle(
+                  fontSize: 12.0,
+                  color: Color(0xFF777587),
+                ),
+              ),
+              const SizedBox(height: 12.0),
+            ],
+            if (task.description == null)
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 14, color: Color(0xFF777587)),
+                  const SizedBox(width: 4),
+                  Text(
+                    task.timeText,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Color(0xFF777587),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Text(
+                task.timeText.toUpperCase(),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10.0,
+                  color: Color(0xFFBA1A1A),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMediumPriorityCard(TaskItem task) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFFEDEEEF)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Text(
-              '${task.score}',
-              style: const TextStyle(
-fontWeight: FontWeight.bold,
-                fontSize: 10.0,
-                color: Color(0xFFF59E0B),
+  Widget _buildMediumPriorityCard(BuildContext context, TaskItem task) {
+    return InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TaskDetailPage(task: task))),
+      borderRadius: BorderRadius.circular(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: const Color(0xFFEDEEEF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                '${task.score}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10.0,
+                  color: Color(0xFFF59E0B),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: const TextStyle(
-fontWeight: FontWeight.bold,
-                    fontSize: 14.0,
-                    color: Color(0xFF191C1D),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
+                      color: Color(0xFF191C1D),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2.0),
-                Text(
-                  task.timeText,
-                  style: const TextStyle(
-fontSize: 12.0,
-                    color: Color(0xFF777587),
+                  const SizedBox(height: 2.0),
+                  Text(
+                    task.timeText,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Color(0xFF777587),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLowPriorityCard(TaskItem task) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFFEDEEEF)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.0),
+  Widget _buildLowPriorityCard(BuildContext context, TaskItem task) {
+    return InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TaskDetailPage(task: task))),
+      borderRadius: BorderRadius.circular(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: const Color(0xFFEDEEEF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
             ),
-            child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
-          ),
-          const SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        task.title,
-                        style: const TextStyle(
-fontWeight: FontWeight.bold,
-                          fontSize: 14.0,
-                          color: Color(0xFF191C1D),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.0,
+                            color: Color(0xFF191C1D),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${task.score}',
-                      style: const TextStyle(
-fontWeight: FontWeight.bold,
-                        fontSize: 10.0,
-                        color: Color(0xFF10B981),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${task.score}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10.0,
+                          color: Color(0xFF10B981),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2.0),
-                Text(
-                  task.timeText,
-                  style: const TextStyle(
-fontSize: 12.0,
-                    color: Color(0xFF777587),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2.0),
+                  Text(
+                    task.timeText,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Color(0xFF777587),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

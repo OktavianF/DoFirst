@@ -29,141 +29,284 @@ class _FocusSessionContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _FocusSessionContentBody(taskName: taskName, taskId: taskId);
+  }
+}
+
+class _FocusSessionContentBody extends StatefulWidget {
+  final String taskName;
+  final String? taskId;
+
+  const _FocusSessionContentBody({required this.taskName, this.taskId});
+
+  @override
+  State<_FocusSessionContentBody> createState() => _FocusSessionContentBodyState();
+}
+
+class _FocusSessionContentBodyState extends State<_FocusSessionContentBody> {
+  Future<void> _handleBackPressed(FocusSessionViewModel viewModel) async {
+    final decision = viewModel.evaluateExitDecision();
+
+    if (decision == FocusExitDecision.allow) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+
+    if (decision == FocusExitDecision.strictBlocked) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Strict mode aktif. Selesaikan atau reset timer dulu.'),
+        ),
+      );
+      return;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Keluar dari sesi fokus?'),
+          content: const Text('Timer sedang berjalan. Yakin mau keluar dari halaman ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Keluar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldExit == true && mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final viewModel = context.watch<FocusSessionViewModel>();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => Navigator.of(context).pop(),
+    if (viewModel.strictStopTriggered) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Strict mode menghentikan timer karena aplikasi ditinggalkan.'),
+          ),
+        );
+        viewModel.clearStrictStopFlag();
+      });
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _handleBackPressed(viewModel);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              onPressed: () => _handleBackPressed(viewModel),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        viewModel.isBreakMode ? 'TAKING A BREAK' : 'CURRENTLY FOCUSING',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        viewModel.isBreakMode
+                            ? 'Stretch your body or take a short walk!'
+                            : widget.taskName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: viewModel.isBreakMode ? AppColors.inputFill : AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer,
+                                  size: 14,
+                                  color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Focus: ${viewModel.focusMinutes}m',
+                                  style: TextStyle(
+                                    color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: viewModel.isBreakMode ? AppColors.primary : AppColors.inputFill,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.coffee,
+                                  size: 14,
+                                  color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Break: ${viewModel.breakMinutes}m',
+                                  style: TextStyle(
+                                    color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSessionSettings(viewModel),
+                      const Spacer(),
+                      _buildProgressTimer(context, viewModel),
+                      const Spacer(),
+                      _buildControls(viewModel),
+                      const SizedBox(height: 24),
+                      _buildFinishAction(context),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 16),
-                    // Active Task Display
-                    Text(
-                      viewModel.isBreakMode ? 'TAKING A BREAK' : 'CURRENTLY FOCUSING',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      viewModel.isBreakMode
-                          ? 'Stretch your body or take a short walk!'
-                          : taskName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: viewModel.isBreakMode ? AppColors.inputFill : AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.timer, 
-                                size: 14, 
-                                color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Focus: 25m',
-                                style: TextStyle(
-                                  color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: viewModel.isBreakMode ? AppColors.primary : AppColors.inputFill,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.coffee,
-                                size: 14,
-                                color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Break: 5m',
-                                style: TextStyle(
-                                  color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
+    );
+  }
 
-                    // Central Timer Display
-                    _buildProgressTimer(context, viewModel),
-
-                    const Spacer(),
-
-                    // Timer Controls
-                    _buildControls(viewModel),
-                    const SizedBox(height: 24),
-
-                    // Finish Action
-                    _buildFinishAction(context),
-                    const SizedBox(height: 24),
-                  ],
+  Widget _buildSessionSettings(FocusSessionViewModel viewModel) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder.withValues(alpha: 0.6)),
+      ),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 6),
+        title: const Text(
+          'Timer Settings',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          'Focus ${viewModel.focusMinutes}m • Break ${viewModel.breakMinutes}m',
+          style: const TextStyle(fontSize: 12),
+        ),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Focus ${viewModel.focusMinutes}m', style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              Expanded(
+                child: Slider(
+                  value: viewModel.focusMinutes.toDouble(),
+                  min: 5,
+                  max: 90,
+                  divisions: 17,
+                  label: '${viewModel.focusMinutes}',
+                  onChanged: viewModel.isRunning ? null : (v) => viewModel.setFocusMinutes(v.round()),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Break ${viewModel.breakMinutes}m', style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              Expanded(
+                child: Slider(
+                  value: viewModel.breakMinutes.toDouble(),
+                  min: 1,
+                  max: 30,
+                  divisions: 29,
+                  label: '${viewModel.breakMinutes}',
+                  onChanged: viewModel.isRunning ? null : (v) => viewModel.setBreakMinutes(v.round()),
+                ),
+              ),
+            ],
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text('Warning mode saat keluar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            value: viewModel.warningMode,
+            onChanged: viewModel.setWarningMode,
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            title: const Text('Strict mode (blokir keluar)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            subtitle: const Text('Jika app ditinggalkan, sesi dihentikan otomatis.', style: TextStyle(fontSize: 11)),
+            value: viewModel.strictMode,
+            onChanged: viewModel.setStrictMode,
+          ),
+        ],
       ),
     );
   }
@@ -317,9 +460,9 @@ class _FocusSessionContent extends StatelessWidget {
                         ),
                         onPressed: () async {
                           // Delete the task via API
-                          if (taskId != null) {
+                          if (widget.taskId != null) {
                             try {
-                              await TaskRepository().completeTask(taskId!);
+                              await TaskRepository().completeTask(widget.taskId!);
                             } catch (_) {
                               // Continue even if delete fails
                             }

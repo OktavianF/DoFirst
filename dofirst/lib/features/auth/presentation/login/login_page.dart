@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const SizedBox(height: 60),
                   Text(
-                    'Welcome back',
+                    'Welcome to',
                     style: Theme.of(
                       context,
                     ).textTheme.headlineMedium?.copyWith(fontSize: 30),
@@ -135,47 +135,6 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            SizedBox(
-                              height: 54,
-                              child: OutlinedButton.icon(
-                                onPressed: vm.isSubmitting ? null : () async {
-                                  final success = await vm.loginWithGoogle();
-                                  if (!context.mounted) return;
-                                  if (success) {
-                                    context.read<HomeViewModel>().loadDashboard();
-                                    context.read<TaskListViewModel>().loadTasks();
-                                    context.read<ProfileViewModel>().loadProfile();
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(builder: (_) => const HomePage()),
-                                      (route) => false,
-                                    );
-                                  } else if (vm.errorMessage != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(vm.errorMessage!)),
-                                    );
-                                  }
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: AppColors.cardBorder,
-                                  ),
-                                  shape: const StadiumBorder(),
-                                  foregroundColor: AppColors.textPrimary,
-                                  backgroundColor: Colors.white,
-                                ),
-                                icon: const _GoogleGlyph(),
-                                label: const Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            const _OrDivider(),
-                            const SizedBox(height: 24),
                             FormBuilder(
                               key: _formKey,
                               autovalidateMode: vm.autovalidateMode,
@@ -286,6 +245,47 @@ class _LoginPageState extends State<LoginPage> {
                                       onPressed: vm.canSubmit
                                           ? () => _submit(vm)
                                           : null,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  const _OrDivider(),
+                                  const SizedBox(height: 24),
+                                  SizedBox(
+                                    height: 54,
+                                    child: OutlinedButton.icon(
+                                      onPressed: vm.isSubmitting ? null : () async {
+                                        final success = await vm.loginWithGoogle();
+                                        if (!context.mounted) return;
+                                        if (success) {
+                                          context.read<HomeViewModel>().loadDashboard();
+                                          context.read<TaskListViewModel>().loadTasks();
+                                          context.read<ProfileViewModel>().loadProfile();
+                                          Navigator.of(context).pushAndRemoveUntil(
+                                            MaterialPageRoute(builder: (_) => const HomePage()),
+                                            (route) => false,
+                                          );
+                                        } else if (vm.errorMessage != null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(vm.errorMessage!)),
+                                          );
+                                        }
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                          color: AppColors.cardBorder,
+                                        ),
+                                        shape: const StadiumBorder(),
+                                        foregroundColor: AppColors.textPrimary,
+                                        backgroundColor: Colors.white,
+                                      ),
+                                      icon: const _GoogleGlyph(),
+                                      label: const Text(
+                                        'Continue with Google',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],

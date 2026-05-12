@@ -1,0 +1,470 @@
+import 'dart:async';
+import 'package:dofirst/features/focus/presentation/focus_session/focus_session_page.dart';
+import 'package:dofirst/features/home/presentation/home_page.dart';
+import 'package:dofirst/features/history/presentation/history_page.dart';
+import 'package:dofirst/features/profile/presentation/profile_page.dart' show ProfilePage;
+import 'package:dofirst/features/tasks/presentation/task_list/task_list_page.dart';
+import 'package:dofirst/features/home/presentation/home_view_model.dart';
+import 'package:dofirst/shared/navigation/no_transition_route.dart';
+import 'package:dofirst/shared/widgets/app_bottom_nav_bar.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class FocusPage extends StatelessWidget {
+  const FocusPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const _FocusPageContent();
+  }
+}
+
+class _FocusPageContent extends StatefulWidget {
+  const _FocusPageContent();
+
+  @override
+  State<_FocusPageContent> createState() => _FocusPageContentState();
+}
+
+class _FocusPageContentState extends State<_FocusPageContent> {
+  Timer? _countdownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) {
+        context.read<HomeViewModel>().refreshCountdowns();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<HomeViewModel>();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildTopNavigationBar(context, viewModel),
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 16.0,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _buildHeroTaskSection(context, viewModel),
+                        const SizedBox(height: 32.0),
+                        _buildUpNextSection(context, viewModel),
+                        const SizedBox(height: 32.0),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: AppBottomNavBar(
+        currentIndex: 1,
+        onTap: (index) => _onBottomNavTap(context, viewModel, index),
+      ),
+    );
+  }
+
+  void _onBottomNavTap(
+    BuildContext context,
+    HomeViewModel viewModel,
+    int index,
+  ) {
+    if (index == 1) {
+      return;
+    } else if (index == 0) {
+      pushReplacementNoTransition(context, HomePage());
+      return;
+    } else if (index == 2) {
+      pushReplacementNoTransition(context, TaskListPage());
+      return;
+    } else {
+      pushReplacementNoTransition(context, ProfilePage());
+      return;
+    }
+  }
+
+  void _openFocusSession(BuildContext context, String taskName, String? taskId) {
+    pushNoTransition(context, FocusSessionPage(taskName: taskName, taskId: taskId));
+  }
+
+  Widget _buildTopNavigationBar(BuildContext context, HomeViewModel viewModel) {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/images/logo.png',
+            width: 160,
+            height: 72,
+            fit: BoxFit.contain,
+            errorBuilder: (c, e, s) => const Text(
+              'DoFirst',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2F80ED),
+                height: 1,
+              ),
+            ),
+          ),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: const Color(0xFFF3F4F5),
+            child: IconButton(
+              key: const Key('focus_profile_button'),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              icon: const Icon(
+                Icons.person,
+                size: 20,
+                color: Color(0xFF191C1D),
+              ),
+              onPressed: () => _onBottomNavTap(context, viewModel, 3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroTaskSection(BuildContext context, HomeViewModel viewModel) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 10.0),
+          padding: const EdgeInsets.all(33.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32.0),
+            border: Border.all(
+              color: const Color(0xFFC7C4D8).withValues(alpha: 0.1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF191C1D).withValues(alpha: 0.06),
+                offset: const Offset(0, 20),
+                blurRadius: 40.0,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          viewModel.heroTaskTitle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 30.0,
+                            color: Color(0xFF191C1D),
+                            height: 1.25,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.schedule,
+                              size: 16,
+                              color: Color(0xFF464555),
+                            ),
+                            const SizedBox(width: 6.0),
+                            Flexible(
+                              child: Text(
+                                viewModel.heroTaskTime,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 16.0,
+                                  color: Color(0xFF464555),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        viewModel.heroTaskScore.toString(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 36.0,
+                          letterSpacing: -1.8,
+                          color: Color(0xFF3525CD),
+                        ),
+                      ),
+                      Text(
+                        'SCORE',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10.0,
+                          letterSpacing: 1.0,
+                          color: const Color(0xFF777587),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24.0),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: viewModel.heroTaskTags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 4.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE7E8E9),
+                      borderRadius: BorderRadius.circular(9999.0),
+                    ),
+                    child: Text(
+                      tag.toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10.0,
+                        letterSpacing: 0.5,
+                        color: Color(0xFF464555),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24.0),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3525CD), Color(0xFF4F46E5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3525CD).withValues(alpha: 0.2),
+                      offset: const Offset(0, 20),
+                      blurRadius: 25.0,
+                      spreadRadius: -5.0,
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: const Key('start_now_button'),
+                    borderRadius: BorderRadius.circular(24.0),
+                    onTap: () =>
+                        _openFocusSession(context, viewModel.heroTaskTitle, viewModel.heroTaskId),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Start Now',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18.0,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          top: -2.0,
+          left: 24.0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFAB373B),
+              borderRadius: BorderRadius.circular(9999.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  offset: const Offset(0, 10),
+                  blurRadius: 15.0,
+                  spreadRadius: -3.0,
+                ),
+              ],
+            ),
+            child: const Text(
+              'HIGHEST PRIORITY',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 10.0,
+                letterSpacing: 1.0,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpNextSection(BuildContext context, HomeViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Up Next',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.0,
+                  color: Color(0xFF191C1D),
+                ),
+              ),
+              TextButton(
+                key: const Key('view_all_tasks_button'),
+                onPressed: () {
+                  debugPrint('FocusPage: View All pressed, navigating to HistoryPage');
+                  pushNoTransition(context, const HistoryPage());
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'View All',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.0,
+                    color: const Color(0xFF3525CD),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16.0),
+        Column(
+          children: viewModel.upcomingTasks.map((task) {
+            return InkWell(
+              onTap: () => _openFocusSession(context, task.title, task.id),
+              borderRadius: BorderRadius.circular(24.0),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12.0),
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F5),
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: task.dotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14.0,
+                              color: Color(0xFF191C1D),
+                            ),
+                          ),
+                          const SizedBox(height: 4.0),
+                          Text(
+                            task.time,
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 12.0,
+                              color: const Color(0xFF777587),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.0),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFFC7C4D8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}

@@ -1,0 +1,14 @@
+{
+    "files.exclude": {
+        "**/build": true
+    },
+    "search.exclude": {
+        "**/build": true
+    },
+    "files.watcherExclude": {
+        "**/build/**": true
+    },
+    "problems.exclude": {
+        "**/build/**": true
+    }
+}

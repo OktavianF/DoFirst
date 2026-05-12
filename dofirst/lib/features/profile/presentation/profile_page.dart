@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+// ignore_for_file: unused_element
 
 import 'package:provider/provider.dart';
 import '../../../shared/repositories/auth_repository.dart';
 import '../../auth/presentation/login/login_view_model.dart';
-import '../../auth/presentation/login/login_page.dart';
+import '../../auth/presentation/login/login_page.dart' show LoginPage;
 import '../../home/presentation/home_page.dart';
 import '../../home/presentation/home_view_model.dart';
 import '../../notifications/presentation/notifications_page.dart';
@@ -11,8 +12,12 @@ import '../../tasks/presentation/task_list/task_list_page.dart';
 import '../../tasks/presentation/task_list/task_list_view_model.dart';
 import '../../../shared/navigation/no_transition_route.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
+import '../../../shared/services/user_preferences_service.dart';
+import 'edit_profile_page.dart';
 import 'profile_view_model.dart';
+import '../../focus/presentation/focus_session/focus_settings_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -46,10 +51,10 @@ class _ProfilePageContent extends StatelessWidget {
                         children: [
                           _buildProfileCard(vm),
                           const SizedBox(height: 20),
-                          // Hide stat dan setting section
-                          // _buildStatsSection(vm),
-                          // const SizedBox(height: 32),
-                          // _buildSettingsList(context),
+                          // Show stats and settings section as in Figma
+                          _buildStatsSection(vm),
+                          const SizedBox(height: 24),
+                          _buildSettingsList(context),
                           const SizedBox(height: 16),
                           _buildLogoutButton(context),
                         ],
@@ -133,38 +138,11 @@ class _ProfilePageContent extends StatelessWidget {
         children: [
           Stack(
             children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2DFFF), width: 4),
-                ),
-                child: ClipOval(
-                  child: vm.avatarUrl != null
-                      ? Image.network(
-                          vm.avatarUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.person,
-                            size: 48,
-                            color: AppColors.textMuted,
-                          ),
-                        )
-                      : Container(
-                          color: const Color(0xFFE2DFFF),
-                          child: Center(
-                            child: Text(
-                              vm.fullName.isNotEmpty ? vm.fullName[0].toUpperCase() : '?',
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F0069),
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
+              AppAvatar(
+                source: vm.avatarUrl,
+                fallbackText: vm.fullName.isNotEmpty ? vm.fullName[0].toUpperCase() : '?',
+                size: 96,
+                borderWidth: 4,
               ),
               Positioned(
                 right: 0,
@@ -288,12 +266,15 @@ fontSize: 14,
             color: Colors.transparent,
             child: Column(
               children: [
-                // First row is a dedicated tile because it contains status + 2-line description.
-                _buildGoogleSyncTile(
+                _buildSimpleTile(
+                  icon: Icons.edit_outlined,
+                  iconBg: const Color(0xFFF1F5F9),
+                  iconColor: const Color(0xFF475569),
+                  label: 'Edit Profile',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Google Sync setting is being developed'),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfilePage(),
                       ),
                     );
                   },
@@ -314,13 +295,25 @@ fontSize: 14,
                 ),
                 _buildDivider(),
                 _buildSimpleTile(
-                  icon: Icons.person_outline,
-                  iconBg: const Color(0xFFF1F5F9),
-                  iconColor: const Color(0xFF475569),
-                  label: 'Account Settings',
+                  icon: Icons.timer_outlined,
+                  iconBg: const Color(0xFFF5F3FF),
+                  iconColor: const Color(0xFF7C3AED),
+                  label: 'Focus & Break Settings',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FocusSettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDivider(),
+                _buildGoogleSyncTile(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Account Setting is being developed')),
+                      const SnackBar(
+                        content: Text('Google Sync setting is being developed'),
+                      ),
                     );
                   },
                 ),
@@ -341,6 +334,121 @@ fontSize: 14,
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showFocusBreakSettingsSheet(BuildContext context) async {
+    final currentFocus = await UserPreferencesService.getFocusMinutes() ?? 25;
+    final currentBreak = await UserPreferencesService.getBreakMinutes() ?? 5;
+
+    if (!context.mounted) return;
+
+    var focusMinutes = currentFocus.toDouble();
+    var breakMinutes = currentBreak.toDouble();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 44,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Focus & Break Settings',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Atur durasi default untuk sesi fokus dan istirahat.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text('Focus ${focusMinutes.round()}m', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Slider(
+                          value: focusMinutes,
+                          min: 5,
+                          max: 90,
+                          divisions: 17,
+                          label: '${focusMinutes.round()}',
+                          onChanged: (value) => setState(() => focusMinutes = value),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('Break ${breakMinutes.round()}m', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Slider(
+                          value: breakMinutes,
+                          min: 1,
+                          max: 30,
+                          divisions: 29,
+                          label: '${breakMinutes.round()}',
+                          onChanged: (value) => setState(() => breakMinutes = value),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await UserPreferencesService.saveFocusMinutes(focusMinutes.round());
+                            await UserPreferencesService.saveBreakMinutes(breakMinutes.round());
+                            if (sheetContext.mounted) {
+                              Navigator.of(sheetContext).pop();
+                            }
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Focus & break settings saved')),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Save Settings'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -512,6 +620,7 @@ fontWeight: FontWeight.bold,
                   onPressed: () async {
                     await AuthRepository().logout();
                     if (context.mounted) {
+                      await UserPreferencesService.clearProfileOverrides();
                       context.read<ProfileViewModel>().clear();
                       context.read<HomeViewModel>().clear();
                       context.read<TaskListViewModel>().clear();

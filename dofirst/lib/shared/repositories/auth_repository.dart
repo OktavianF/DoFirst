@@ -2,6 +2,38 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_client.dart';
 
 class AuthRepository {
+  Map<String, dynamic>? _extractSession(Map<String, dynamic> data) {
+    final session = data['session'];
+    if (session is Map<String, dynamic>) {
+      return session;
+    }
+
+    final accessToken = data['accessToken'] ?? data['access_token'];
+    final refreshToken = data['refreshToken'] ?? data['refresh_token'];
+    final expiresAt = data['expiresAt'] ?? data['expires_at'];
+
+    if (accessToken == null || refreshToken == null) {
+      return null;
+    }
+
+    return {
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      ...?(expiresAt == null ? null : {'expiresAt': expiresAt}),
+    };
+  }
+
+  Future<void> _persistSession(Map<String, dynamic> data) async {
+    final session = _extractSession(data);
+    if (session == null) return;
+
+    await ApiClient.saveTokens(
+      accessToken: session['accessToken'] as String? ?? '',
+      refreshToken: session['refreshToken'] as String? ?? '',
+    );
+    await ApiClient.saveLoginTimestamp();
+  }
+
   Future<Map<String, dynamic>> signup({
     required String fullName,
     required String email,
@@ -18,15 +50,7 @@ class AuthRepository {
     );
 
     final data = response['data'] as Map<String, dynamic>;
-    final session = data['session'] as Map<String, dynamic>?;
-
-    if (session != null) {
-      await ApiClient.saveTokens(
-        accessToken: session['accessToken'] as String? ?? '',
-        refreshToken: session['refreshToken'] as String? ?? '',
-      );
-      await ApiClient.saveLoginTimestamp();
-    }
+    await _persistSession(data);
 
     return data;
   }
@@ -45,15 +69,7 @@ class AuthRepository {
     );
 
     final data = response['data'] as Map<String, dynamic>;
-    final session = data['session'] as Map<String, dynamic>?;
-
-    if (session != null) {
-      await ApiClient.saveTokens(
-        accessToken: session['accessToken'] as String? ?? '',
-        refreshToken: session['refreshToken'] as String? ?? '',
-      );
-      await ApiClient.saveLoginTimestamp();
-    }
+    await _persistSession(data);
 
     return data;
   }
@@ -62,6 +78,11 @@ class AuthRepository {
   /// sends ID token to backend for Supabase verification.
   Future<Map<String, dynamic>> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn.instance;
+
+    await googleSignIn.initialize(
+      clientId: '1075110912203-o3cl8onk5pc2o2bfaujb6jv93ufinbfj.apps.googleusercontent.com',
+      serverClientId: null,
+    );
 
     final account = await googleSignIn.authenticate();
 
@@ -77,15 +98,7 @@ class AuthRepository {
     );
 
     final data = response['data'] as Map<String, dynamic>;
-    final session = data['session'] as Map<String, dynamic>?;
-
-    if (session != null) {
-      await ApiClient.saveTokens(
-        accessToken: session['accessToken'] as String? ?? '',
-        refreshToken: session['refreshToken'] as String? ?? '',
-      );
-      await ApiClient.saveLoginTimestamp();
-    }
+    await _persistSession(data);
 
     return data;
   }
@@ -96,7 +109,11 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
-    await GoogleSignIn.instance.disconnect();
+    try {
+      await GoogleSignIn.instance.disconnect();
+    } catch (_) {
+      // Some platforms and tests do not implement Google Sign-In disconnect.
+    }
     await ApiClient.clearTokens();
   }
 }
