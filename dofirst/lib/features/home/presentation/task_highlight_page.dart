@@ -114,7 +114,7 @@ class _TaskHighlightPageContentState extends State<_TaskHighlightPageContent> {
 
     return Container(
       height: 57,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       alignment: Alignment.center,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,11 +122,11 @@ class _TaskHighlightPageContentState extends State<_TaskHighlightPageContent> {
         children: [
           Image.asset(
             'assets/images/logo.png',
-            width: 96,
-            height: 54,
+            width: 80,
+            height: 45,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.broken_image, size: 54),
+                const Icon(Icons.broken_image, size: 45),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,

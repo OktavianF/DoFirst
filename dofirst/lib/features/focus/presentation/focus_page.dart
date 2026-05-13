@@ -111,21 +111,21 @@ class _FocusPageContentState extends State<_FocusPageContent> {
 
   Widget _buildTopNavigationBar(BuildContext context, HomeViewModel viewModel) {
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      height: 57,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Image.asset(
             'assets/images/logo.png',
-            width: 160,
-            height: 72,
+            width: 80,
+            height: 45,
             fit: BoxFit.contain,
             errorBuilder: (c, e, s) => const Text(
               'DoFirst',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF2F80ED),
                 height: 1,

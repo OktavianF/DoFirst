@@ -63,7 +63,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   Text(
                     'Forgot password?',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 42,
+                          fontSize: 24,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -72,18 +72,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   const SizedBox(height: 12),
                   Image.asset(
                     'assets/images/logo.png',
-                    width: 160,
-                    height: 72,
+                    width: 80,
+                    height: 45,
                     fit: BoxFit.contain,
                     errorBuilder: (c, e, s) => const Icon(
                       Icons.broken_image,
-                      size: 56,
+                      size: 45,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Enter your email address to reset your password and continue your productivity journey.',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 13),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),

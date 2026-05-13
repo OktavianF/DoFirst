@@ -46,32 +46,55 @@ class _HomePageContentState extends State<_HomePageContent> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildTopBar(context)),
+      body: Stack(
+        children: [
+          // Scrollable content
+          SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _buildWelcomeSection(vm),
-                      const SizedBox(height: 12),
-                  _buildSmallStatsRow(vm),
-                      const SizedBox(height: 14),
-                  _buildBigCardsRow(vm),
-                      const SizedBox(height: 14),
-                  _buildAddTaskButton(),
-                      const SizedBox(height: 14),
-                  _buildHistoryHeader(),
+                  padding: const EdgeInsets.only(
+                    top: 65,
+                    left: 16,
+                    right: 16,
+                    bottom: 8,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildWelcomeSection(vm),
+                      const SizedBox(height: 8),
+                      _buildSmallStatsRow(vm),
+                      const SizedBox(height: 10),
+                      _buildBigCardsRow(vm),
+                      const SizedBox(height: 10),
+                      _buildAddTaskButton(),
+                      const SizedBox(height: 10),
+                      _buildHistoryHeader(),
                       const SizedBox(height: 6),
                       ...historyItems.map(_buildHistoryTile),
-                  const SizedBox(height: 120),
-                ]),
+                      const SizedBox(height: 120),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Fixed header at top
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                height: 57,
+                color: AppColors.background,
+                child: _buildTopBar(context),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: 0,
@@ -88,13 +111,13 @@ class _HomePageContentState extends State<_HomePageContent> {
 
     return Container(
       height: 57,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       alignment: Alignment.center,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset('assets/images/logo.png', width: 96, height: 54, fit: BoxFit.contain,
-              errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 54)),
+          Image.asset('assets/images/logo.png', width: 80, height: 45, fit: BoxFit.contain,
+              errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 45)),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -130,16 +153,16 @@ class _HomePageContentState extends State<_HomePageContent> {
           'WELCOME TO',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 11,
+            fontSize: 10,
             letterSpacing: 1.1,
             color: Color(0xFF8A8A9D),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           'Good morning,',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF141420).withValues(alpha: 0.92),
           ),
@@ -148,17 +171,17 @@ class _HomePageContentState extends State<_HomePageContent> {
         Text(
           vm.userName.isNotEmpty ? vm.userName : 'Nadhia',
           style: const TextStyle(
-            fontSize: 30,
+            fontSize: 24,
             height: 1.05,
             fontWeight: FontWeight.w800,
             color: Color(0xFF141420),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
           'Dashboard',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: Color(0xFF141420),
           ),

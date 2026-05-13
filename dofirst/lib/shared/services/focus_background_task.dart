@@ -27,17 +27,23 @@ class FocusBackgroundTask {
     // Configure background fetch to check timer every 15 minutes
     // On iOS, this typically runs every 15 minutes when app is in background
     // On Android, this is managed by WorkManager internally
-    BackgroundFetch.configure(
-      BackgroundFetchConfig(
-        minimumFetchInterval: 15, // 15 minutes
-        forceAlarmManager: false, // Use WorkManager if available
-        stopOnTerminate: false,
-        enableHeadless: true,
-        requiredNetworkType: NetworkType.NONE, // Don't require network
-      ),
-      _handleBackgroundFetch,
-      _handleBackgroundTimeout,
-    );
+    // Skip on web platform (not supported)
+    try {
+      BackgroundFetch.configure(
+        BackgroundFetchConfig(
+          minimumFetchInterval: 15, // 15 minutes
+          forceAlarmManager: false, // Use WorkManager if available
+          stopOnTerminate: false,
+          enableHeadless: true,
+          requiredNetworkType: NetworkType.NONE, // Don't require network
+        ),
+        _handleBackgroundFetch,
+        _handleBackgroundTimeout,
+      );
+    } catch (e) {
+      // Background fetch not supported on this platform (e.g., web)
+      print('[FocusBackgroundTask] Background fetch not available: $e');
+    }
 
     _initialized = true;
   }

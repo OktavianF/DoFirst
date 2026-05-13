@@ -38,36 +38,44 @@ class AppBottomNavBar extends StatelessWidget {
             child: SizedBox(
               height: 80,
               child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: 'Home',
-                isActive: currentIndex == 0,
-                onTap: () => onTap(0),
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _NavItem(
+                      icon: Icons.home_outlined,
+                      label: 'Home',
+                      isActive: currentIndex == 0,
+                      onTap: () => onTap(0),
+                    ),
+                  ),
+                  Expanded(
+                    child: _NavItem(
+                      icon: Icons.adjust_outlined,
+                      label: 'Focus',
+                      isActive: currentIndex == 1,
+                      onTap: () => onTap(1),
+                    ),
+                  ),
+                  Expanded(
+                    child: _NavItem(
+                      icon: Icons.checklist,
+                      label: 'Tasks',
+                      isActive: currentIndex == 2,
+                      onTap: () => onTap(2),
+                    ),
+                  ),
+                  Expanded(
+                    child: _NavItem(
+                      icon: Icons.person_outline,
+                      label: 'Profile',
+                      isActive: currentIndex == 3,
+                      onTap: () => onTap(3),
+                    ),
+                  ),
+                ],
               ),
-              _NavItem(
-                icon: Icons.adjust_outlined,
-                label: 'Focus',
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _NavItem(
-                icon: Icons.checklist,
-                label: 'Tasks',
-                isActive: currentIndex == 2,
-                onTap: () => onTap(2),
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                label: 'Profile',
-                isActive: currentIndex == 3,
-                onTap: () => onTap(3),
-              ),
-            ],
-          ),
-        ),
+            ),
           ),
         ),
       ),
@@ -95,28 +103,29 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFFEEF2FF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(32.0),
+          borderRadius: BorderRadius.circular(20.0),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 24,
+              size: 18,
               color: isActive
                   ? const Color(0xFF4338CA)
                   : const Color(0xFF94A3B8),
             ),
-            const SizedBox(height: 4.0),
+            const SizedBox(height: 1.0),
             Text(
               label.toUpperCase(),
               style: TextStyle(
-fontWeight: FontWeight.w600,
-                fontSize: 11.0,
-                letterSpacing: 1.1,
+                fontWeight: FontWeight.w600,
+                fontSize: 8.0,
+                letterSpacing: 0.6,
                 color: isActive
                     ? const Color(0xFF4338CA)
                     : const Color(0xFF94A3B8),

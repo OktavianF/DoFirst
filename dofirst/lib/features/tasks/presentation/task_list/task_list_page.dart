@@ -66,20 +66,20 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
                 slivers: [
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 24.0,
+                      horizontal: 16.0,
+                      vertical: 16.0,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         _buildHeaderSection(viewModel),
-                        const SizedBox(height: 40.0),
+                        const SizedBox(height: 24.0),
                         _buildHighPrioritySection(viewModel),
-                        const SizedBox(height: 40.0),
+                        const SizedBox(height: 24.0),
                         _buildMediumPrioritySection(viewModel),
-                        const SizedBox(height: 40.0),
+                        const SizedBox(height: 24.0),
                         _buildLowPrioritySection(viewModel),
                         const SizedBox(
-                          height: 120.0,
+                          height: 100.0,
                         ), // Bottom padding for shell
                       ]),
                     ),
@@ -142,7 +142,7 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
 
     return Container(
       height: 57,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       alignment: Alignment.center,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,8 +150,8 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
         children: [
           Image.asset(
             'assets/images/logo.png',
-            width: 96,
-            height: 54,
+            width: 80,
+            height: 45,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) =>
                 const Icon(Icons.broken_image, size: 54),
@@ -204,24 +204,24 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
         const Text(
           'Your Tasks',
           style: TextStyle(
-fontWeight: FontWeight.w800,
-            fontSize: 36.0,
+            fontWeight: FontWeight.w800,
+            fontSize: 28.0,
             color: Color(0xFF191C1D),
             height: 1.1,
             letterSpacing: -0.9,
           ),
         ),
-        const SizedBox(height: 16.0),
+        const SizedBox(height: 12.0),
         TextField(
           onChanged: viewModel.updateSearchQuery,
           decoration: InputDecoration(
             hintText: 'Search tasks...',
             prefixIcon: const Padding(
-              padding: EdgeInsets.only(left: 16.0, right: 12.0),
-              child: Icon(Icons.search, size: 18, color: Color(0xFF777587)),
+              padding: EdgeInsets.only(left: 12.0, right: 8.0),
+              child: Icon(Icons.search, size: 16, color: Color(0xFF777587)),
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 46),
-            contentPadding: const EdgeInsets.symmetric(vertical: 18.0),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
             filled: true,
             fillColor: const Color(0xFFF3F4F5),
             border: OutlineInputBorder(
@@ -241,11 +241,11 @@ fontWeight: FontWeight.w800,
             ),
           ),
           style: const TextStyle(
-fontSize: 16.0,
+            fontSize: 14.0,
             color: Color(0xFF191C1D),
           ),
         ),
-        const SizedBox(height: 16.0),
+        const SizedBox(height: 12.0),
         Row(
           children: [
             Expanded(
@@ -253,7 +253,7 @@ fontSize: 16.0,
                 onTap: viewModel.toggleFilter,
                 borderRadius: BorderRadius.circular(16.0),
                 child: Container(
-                  height: 52,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F5),
                     borderRadius: BorderRadius.circular(16.0),
@@ -262,13 +262,13 @@ fontSize: 16.0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.filter_list, size: 18, color: Color(0xFF191C1D)),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.filter_list, size: 16, color: Color(0xFF191C1D)),
+                      const SizedBox(width: 6),
                       Text(
                         viewModel.currentFilterLabel,
                         style: const TextStyle(
-fontWeight: FontWeight.w600,
-                          fontSize: 14.0,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.0,
                           color: Color(0xFF191C1D),
                         ),
                       ),
@@ -277,13 +277,13 @@ fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 8.0),
+            const SizedBox(width: 6.0),
             Expanded(
               child: InkWell(
                 onTap: viewModel.toggleSort,
                 borderRadius: BorderRadius.circular(16.0),
                 child: Container(
-                  height: 52,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F5),
                     borderRadius: BorderRadius.circular(16.0),
@@ -292,16 +292,16 @@ fontWeight: FontWeight.w600,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.sort, size: 18, color: Color(0xFF191C1D)),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.sort, size: 16, color: Color(0xFF191C1D)),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           viewModel.currentSortLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-fontWeight: FontWeight.w600,
-                            fontSize: 14.0,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.0,
                             color: Color(0xFF191C1D),
                           ),
                         ),

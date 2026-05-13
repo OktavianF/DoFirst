@@ -12,6 +12,7 @@ class ProfileViewModel extends ChangeNotifier {
   String _email = '';
   String? _avatarUrl;
   int _totalTasks = 0;
+  int _completedTasks = 0;
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -20,6 +21,7 @@ class ProfileViewModel extends ChangeNotifier {
   String get email => _email;
   String? get avatarUrl => _avatarUrl;
   int get totalTasks => _totalTasks;
+  int get completedTasks => _completedTasks;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -54,6 +56,7 @@ class ProfileViewModel extends ChangeNotifier {
           ? savedAvatarUrl!.trim()
           : profile?['avatarUrl'] as String?;
       _totalTasks = dashData['totalTasks'] as int? ?? 0;
+      _completedTasks = (dashData['completedTasks'] as int?) ?? (dashData['completed_tasks'] as int?) ?? 0;
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
@@ -69,6 +72,7 @@ class ProfileViewModel extends ChangeNotifier {
     _email = '';
     _avatarUrl = null;
     _totalTasks = 0;
+    _completedTasks = 0;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
