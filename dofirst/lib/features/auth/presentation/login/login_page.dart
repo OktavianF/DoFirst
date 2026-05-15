@@ -1,3 +1,4 @@
+import 'package:dofirst/features/auth/presentation/forgot_password/forgot_password_page.dart' as dofirst_forgot;
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dofirst/features/home/presentation/home_page.dart';
@@ -104,7 +105,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const SizedBox(height: 60),
                   Text(
-                    'Welcome back',
+                    'Welcome',
                     style: Theme.of(
                       context,
                     ).textTheme.headlineMedium?.copyWith(fontSize: 30),
@@ -135,47 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            SizedBox(
-                              height: 54,
-                              child: OutlinedButton.icon(
-                                onPressed: vm.isSubmitting ? null : () async {
-                                  final success = await vm.loginWithGoogle();
-                                  if (!context.mounted) return;
-                                  if (success) {
-                                    context.read<HomeViewModel>().loadDashboard();
-                                    context.read<TaskListViewModel>().loadTasks();
-                                    context.read<ProfileViewModel>().loadProfile();
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(builder: (_) => const HomePage()),
-                                      (route) => false,
-                                    );
-                                  } else if (vm.errorMessage != null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(vm.errorMessage!)),
-                                    );
-                                  }
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: AppColors.cardBorder,
-                                  ),
-                                  shape: const StadiumBorder(),
-                                  foregroundColor: AppColors.textPrimary,
-                                  backgroundColor: Colors.white,
-                                ),
-                                icon: const _GoogleGlyph(),
-                                label: const Text(
-                                  'Continue with Google',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            const _OrDivider(),
-                            const SizedBox(height: 24),
                             FormBuilder(
                               key: _formKey,
                               autovalidateMode: vm.autovalidateMode,
@@ -214,14 +174,10 @@ class _LoginPageState extends State<LoginPage> {
                                       _InputLabel(title: 'Password'),
                                       GestureDetector(
                                         onTap: () {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Forgot Password flow not wired yet.',
-                                              ),
-                                            ),
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => const dofirst_forgot.ForgotPasswordPage(),
+                                            )
                                           );
                                         },
                                         child: const Padding(
@@ -289,6 +245,46 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            const _OrDivider(),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 56,
+                              child: OutlinedButton.icon(
+                                onPressed: vm.isSubmitting ? null : () async {
+                                  final success = await vm.loginWithGoogle();
+                                  if (!context.mounted) return;
+                                  if (success) {
+                                    context.read<HomeViewModel>().loadDashboard();
+                                    context.read<TaskListViewModel>().loadTasks();
+                                    context.read<ProfileViewModel>().loadProfile();
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (_) => const HomePage()),
+                                      (route) => false,
+                                    );
+                                  } else if (vm.errorMessage != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(vm.errorMessage!)),
+                                    );
+                                  }
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: AppColors.cardBorder,
+                                  ),
+                                  shape: const StadiumBorder(),
+                                  foregroundColor: AppColors.textPrimary,
+                                ),
+                                icon: const _GoogleGlyph(),
+                                label: const Text(
+                                  'Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                             ),
                           ],

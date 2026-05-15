@@ -54,10 +54,16 @@ class AppBottomNavBar extends StatelessWidget {
                 onTap: () => onTap(1),
               ),
               _NavItem(
-                icon: Icons.person_outline,
-                label: 'Profile',
+                icon: Icons.dashboard_outlined,
+                label: 'Dashboard',
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
+              ),
+              _NavItem(
+                icon: Icons.person_outline,
+                label: 'Profile',
+                isActive: currentIndex == 3,
+                onTap: () => onTap(3),
               ),
             ],
           ),

@@ -9,9 +9,14 @@ import '../../home/presentation/home_view_model.dart';
 import '../../notifications/presentation/notifications_page.dart';
 import '../../tasks/presentation/task_list/task_list_page.dart';
 import '../../tasks/presentation/task_list/task_list_view_model.dart';
+import '../../dashboard/presentation/dashboard_page.dart';
 import '../../../shared/navigation/no_transition_route.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
+import 'edit_profile_page.dart';
+import 'notification_preferences_page.dart';
+import 'help_support_page.dart';
+import 'focus_break_settings_page.dart';
 import 'profile_view_model.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -45,12 +50,9 @@ class _ProfilePageContent extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildProfileCard(vm),
-                          const SizedBox(height: 20),
-                          // Hide stat dan setting section
-                          // _buildStatsSection(vm),
-                          // const SizedBox(height: 32),
-                          // _buildSettingsList(context),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 32),
+                          _buildSettingsList(context),
+                          const SizedBox(height: 32),
                           _buildLogoutButton(context),
                         ],
                       ),
@@ -60,7 +62,7 @@ class _ProfilePageContent extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: AppBottomNavBar(
-        currentIndex: 2,
+        currentIndex: 3,
         onTap: (index) => _onBottomNavTap(context, index),
       ),
     );
@@ -73,6 +75,11 @@ class _ProfilePageContent extends StatelessWidget {
     }
     if (index == 1) {
       pushReplacementNoTransition(context, const TaskListPage());
+      return;
+    }
+    if (index == 2) {
+      pushReplacementNoTransition(context, const DashboardPage());
+      return;
     }
   }
 
@@ -262,7 +269,6 @@ class _ProfilePageContent extends StatelessWidget {
   }
 
   Widget _buildSettingsList(BuildContext context) {
-    // Keep settings grouped in one card to match the visual hierarchy from Figma.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -271,10 +277,11 @@ class _ProfilePageContent extends StatelessWidget {
           child: Text(
             'SETTINGS & ACCOUNT',
             style: TextStyle(
-fontSize: 14,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.4,
-              color: AppColors.textSecondary,
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: Color(0xFF464555),
             ),
           ),
         ),
@@ -288,12 +295,16 @@ fontSize: 14,
             color: Colors.transparent,
             child: Column(
               children: [
-                // First row is a dedicated tile because it contains status + 2-line description.
-                _buildGoogleSyncTile(
+                _buildSimpleTile(
+                  icon: Icons.person_outline,
+                  iconBg: const Color(0xFFF1F4F8),
+                  iconColor: const Color(0xFF191C1D),
+                  label: 'Edit Profile',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Google Sync setting is being developed'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfilePage(),
                       ),
                     );
                   },
@@ -301,38 +312,45 @@ fontSize: 14,
                 _buildDivider(),
                 _buildSimpleTile(
                   icon: Icons.notifications_none,
-                  iconBg: const Color(0xFFFFF7ED),
-                  iconColor: const Color(0xFFEA580C),
+                  iconBg: const Color(0xFFFFF0E6),
+                  iconColor: const Color(0xFFE65100),
                   label: 'Notifications',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Notifications setting is being developed'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationPreferencesPage(),
                       ),
                     );
                   },
                 ),
                 _buildDivider(),
                 _buildSimpleTile(
-                  icon: Icons.person_outline,
-                  iconBg: const Color(0xFFF1F5F9),
-                  iconColor: const Color(0xFF475569),
-                  label: 'Account Settings',
+                  icon: Icons.restore,
+                  iconBg: const Color(0xFFF4EBFF),
+                  iconColor: const Color(0xFF7B1FA2),
+                  label: 'Focus & Break Settings',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Account Setting is being developed')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FocusBreakSettingsPage(),
+                      ),
                     );
                   },
                 ),
                 _buildDivider(),
                 _buildSimpleTile(
                   icon: Icons.help_outline,
-                  iconBg: const Color(0xFFECFDF5),
-                  iconColor: const Color(0xFF0F766E),
+                  iconBg: const Color(0xFFE8F5E9),
+                  iconColor: const Color(0xFF1B5E20),
                   label: 'Help & Support',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help & Support is being developed')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HelpSupportPage(),
+                      ),
                     );
                   },
                 ),
@@ -344,81 +362,6 @@ fontSize: 14,
     );
   }
 
-  Widget _buildGoogleSyncTile({VoidCallback? onTap}) {
-    // Specialized tile used for connected account state and metadata.
-    return InkWell(
-      onTap: onTap,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                _buildSquareIcon(
-                  icon: Icons.sync,
-                  bg: const Color(0xFFEEF2FF),
-                  color: const Color(0xFF4F46E5),
-                ),
-                const SizedBox(width: 16),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Google Sync',
-                      style: TextStyle(
-fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Connected to Google\nCalendar',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.3,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6CF8BB),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'ACTIVE',
-                    style: TextStyle(
-                      color: Color(0xFF006C49),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 18,
-                  color: Color(0xFF777587),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildSimpleTile({
     required IconData icon,

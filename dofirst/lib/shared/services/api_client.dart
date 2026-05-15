@@ -173,6 +173,18 @@ class ApiClient {
     return _handleResponse(response, path: path, method: 'POST', body: body, withAuth: withAuth);
   }
 
+  static Future<Map<String, dynamic>> put(String path, {Map<String, dynamic>? body, bool withAuth = true}) async {
+    final headers = await _headers(withAuth: withAuth);
+    final response = await http.put(
+      Uri.parse('$_baseUrl$path'),
+      headers: headers,
+      body: body != null ? jsonEncode(body) : null,
+      // ignore: depend_on_referenced_packages
+    ).timeout(const Duration(seconds: 15));
+    
+    return _handleResponse(response, path: path, method: 'PUT', withAuth: withAuth, body: body);
+  }
+
   static Future<Map<String, dynamic>> delete(String path, {bool withAuth = true}) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl$path'),

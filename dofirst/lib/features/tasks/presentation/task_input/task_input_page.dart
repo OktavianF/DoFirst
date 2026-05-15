@@ -29,10 +29,12 @@ class _TaskInputContent extends StatefulWidget {
 
 class _TaskInputContentState extends State<_TaskInputContent> {
   final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -128,6 +130,98 @@ fontSize: 18,
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4.0, bottom: 16.0),
+                      child: Text(
+                        'DESCRIPTION (Optional)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF777587),
+                        ),
+                      ),
+                    ),
+                    TextField(
+                      controller: _descriptionController,
+                      onChanged: viewModel.updateDescription,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF191C1D),
+                      ),
+                      textInputAction: TextInputAction.done,
+                      maxLines: 4,
+                      minLines: 1,
+                      decoration: InputDecoration(
+                        hintText: 'Add details here...',
+                        hintStyle: TextStyle(
+                          color: const Color(0xFF777587).withValues(alpha: 0.5),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F5),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4.0, bottom: 16.0),
+                      child: Text(
+                        'ATTACHMENT (Optional)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF777587),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        // Mock file picker
+                        viewModel.updateAttachment('document_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F5),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFFC7C4D8).withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.attach_file, color: Color(0xFF4F46E5)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                viewModel.attachmentName ?? 'Tap to attach a file...',
+                                style: TextStyle(
+                                  color: viewModel.attachmentName == null
+                                      ? const Color(0xFF777587).withValues(alpha: 0.5)
+                                      : const Color(0xFF191C1D),
+                                  fontSize: 16,
+                                  fontWeight: viewModel.attachmentName == null ? FontWeight.w400 : FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (viewModel.attachmentName != null)
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(Icons.close, color: Color(0xFF777587), size: 20),
+                                onPressed: () => viewModel.updateAttachment(null),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),

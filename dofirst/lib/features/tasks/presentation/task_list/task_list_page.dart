@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../notifications/presentation/notifications_page.dart';
 import '../task_input/task_input_page.dart';
 import 'task_list_view_model.dart';
+import '../task_detail/task_detail_page.dart';
 
 class TaskListPage extends StatelessWidget {
   const TaskListPage({super.key});
@@ -404,7 +405,7 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 16.0),
           itemBuilder: (context, index) {
-            return _buildHighPriorityCard(tasks[index]);
+            return _buildHighPriorityCard(context, tasks[index]);
           },
         ),
       ],
@@ -430,7 +431,7 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12.0),
           itemBuilder: (context, index) {
-            return _buildMediumPriorityCard(tasks[index]);
+            return _buildMediumPriorityCard(context, tasks[index]);
           },
         ),
       ],
@@ -456,19 +457,21 @@ fontWeight: FontWeight.bold,
           itemCount: tasks.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12.0),
           itemBuilder: (context, index) {
-            return _buildLowPriorityCard(tasks[index]);
+            return _buildLowPriorityCard(context, tasks[index]);
           },
         ),
       ],
     );
   }
 
-  Widget _buildHighPriorityCard(TaskItem task) {
+  Widget _buildHighPriorityCard(BuildContext context, TaskItem task) {
     // Alternate icon logic to match the design (e.g., Task 1 = priority_high, Task 2 = bolt)
     final bool isEmergency = task.title.toLowerCase().contains('emergency') || 
                              task.title.toLowerCase().contains('critical');
     
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TaskDetailPage(task: task))),
+      child: Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -564,123 +567,130 @@ fontWeight: FontWeight.bold,
             ),
         ],
       ),
+      ),
     );
   }
 
-  Widget _buildMediumPriorityCard(TaskItem task) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFFEDEEEF)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Text(
-              '${task.score}',
-              style: const TextStyle(
-fontWeight: FontWeight.bold,
-                fontSize: 10.0,
-                color: Color(0xFFF59E0B),
+  Widget _buildMediumPriorityCard(BuildContext context, TaskItem task) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TaskDetailPage(task: task))),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: const Color(0xFFEDEEEF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                '${task.score}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10.0,
+                  color: Color(0xFFF59E0B),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: const TextStyle(
-fontWeight: FontWeight.bold,
-                    fontSize: 14.0,
-                    color: Color(0xFF191C1D),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
+                      color: Color(0xFF191C1D),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2.0),
-                Text(
-                  task.timeText,
-                  style: const TextStyle(
-fontSize: 12.0,
-                    color: Color(0xFF777587),
+                  const SizedBox(height: 2.0),
+                  Text(
+                    task.timeText,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Color(0xFF777587),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLowPriorityCard(TaskItem task) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: const Color(0xFFEDEEEF)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.0),
+  Widget _buildLowPriorityCard(BuildContext context, TaskItem task) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TaskDetailPage(task: task))),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: const Color(0xFFEDEEEF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
             ),
-            child: const Icon(Icons.coffee, size: 18, color: Color(0xFF10B981)),
-          ),
-          const SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        task.title,
-                        style: const TextStyle(
-fontWeight: FontWeight.bold,
-                          fontSize: 14.0,
-                          color: Color(0xFF191C1D),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.0,
+                            color: Color(0xFF191C1D),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${task.score}',
-                      style: const TextStyle(
-fontWeight: FontWeight.bold,
-                        fontSize: 10.0,
-                        color: Color(0xFF10B981),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${task.score}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10.0,
+                          color: Color(0xFF10B981),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2.0),
-                Text(
-                  task.timeText,
-                  style: const TextStyle(
-fontSize: 12.0,
-                    color: Color(0xFF777587),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2.0),
+                  Text(
+                    task.timeText,
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      color: Color(0xFF777587),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

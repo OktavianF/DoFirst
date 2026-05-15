@@ -9,7 +9,9 @@ import 'package:provider/provider.dart';
 import '../../../shared/navigation/no_transition_route.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../shared/widgets/app_bottom_nav_bar.dart';
+import '../../../shared/widgets/app_top_nav_bar.dart';
 import '../../notifications/presentation/notifications_page.dart';
+import '../../dashboard/presentation/dashboard_page.dart';
 import 'home_view_model.dart';
 
 class HomePage extends StatelessWidget {
@@ -58,7 +60,7 @@ class _HomePageContentState extends State<_HomePageContent> {
         bottom: false,
         child: Column(
           children: [
-            _buildTopNavigationBar(context),
+            const AppTopNavBar(),
             Expanded(
               child: CustomScrollView(
                 slivers: [
@@ -100,6 +102,8 @@ class _HomePageContentState extends State<_HomePageContent> {
       return;
     } else if (index == 1) {
       pushReplacementNoTransition(context, const TaskListPage());
+    } else if (index == 2) {
+      pushReplacementNoTransition(context, const DashboardPage());
     } else {
       pushReplacementNoTransition(context, const ProfilePage());
     }
@@ -109,88 +113,6 @@ class _HomePageContentState extends State<_HomePageContent> {
     pushNoTransition(context, FocusSessionPage(taskName: taskName, taskId: taskId));
   }
 
-  Widget _buildTopNavigationBar(BuildContext context) {
-    final profileVm = context.watch<ProfileViewModel>();
-    final initial = profileVm.fullName.isNotEmpty
-        ? profileVm.fullName[0].toUpperCase()
-        : '?';
-
-    return Container(
-      height: 57,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            width: 96,
-            height: 54,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.broken_image, size: 54),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                key: const Key('home_notifications_button'),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(
-                  Icons.notifications_none,
-                  size: 28,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsPage(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: 16),
-              InkWell(
-                key: const Key('home_profile_button'),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfilePage()),
-                  );
-                },
-                customBorder: const CircleBorder(),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFE2DFFF),
-                      width: 4.0,
-                    ),
-                    color: Colors.grey[300],
-                  ),
-                  child: ClipOval(
-                    child: profileVm.avatarUrl != null
-                        ? Image.network(
-                            profileVm.avatarUrl!,
-                            width: 34,
-                            height: 34,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                _buildAvatarFallback(initial),
-                          )
-                        : _buildAvatarFallback(initial),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildAvatarFallback(String initial) {
     return Container(

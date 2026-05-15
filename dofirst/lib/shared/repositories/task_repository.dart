@@ -9,6 +9,7 @@ class TaskRepository {
     int urgency = 3,
     String? deadline,
     List<String>? tags,
+    String? attachment,
   }) async {
     final response = await ApiClient.post(
       '/tasks',
@@ -20,6 +21,7 @@ class TaskRepository {
         'urgency': urgency,
         'deadline': deadline,
         'tags': tags,
+        'attachment': attachment,
       },
     );
     return response['data'] as Map<String, dynamic>;
@@ -34,6 +36,15 @@ class TaskRepository {
   Future<Map<String, dynamic>> getTask(String id) async {
     final response = await ApiClient.get('/tasks/$id');
     return response['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateTask(String id, Map<String, dynamic> data) async {
+    final response = await ApiClient.put('/tasks/$id', body: data);
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> deleteTask(String id) async {
+    await ApiClient.delete('/tasks/$id');
   }
 
   Future<void> completeTask(String id) async {

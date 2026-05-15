@@ -111,6 +111,22 @@ app.post('/api/tasks', (req, res) => {
     res.json({ data: newTask });
 });
 
+
+app.put('/api/tasks/:id', (req, res) => {
+    const index = tasks.findIndex(t => t.id === req.params.id);
+    if (index !== -1) {
+        tasks[index] = { ...tasks[index], ...req.body };
+        res.json({ data: tasks[index] });
+    } else {
+        res.status(404).json({ error: 'Task not found' });
+    }
+});
+
+app.delete('/api/tasks/:id', (req, res) => {
+    tasks = tasks.filter(t => t.id !== req.params.id);
+    res.json({ data: { success: true } });
+});
+
 app.get('/api/tasks/:id', (req, res) => {
     const task = tasks.find(t => t.id === req.params.id);
     if (task) {

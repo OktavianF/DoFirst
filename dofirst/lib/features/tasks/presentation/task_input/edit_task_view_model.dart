@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../shared/repositories/task_repository.dart';
 import '../../../../shared/services/api_client.dart';
 
-class TaskInputViewModel extends ChangeNotifier {
+class EditTaskViewModel extends ChangeNotifier {
   final TaskRepository _taskRepo = TaskRepository();
 
   String _title = '';
@@ -98,7 +98,22 @@ class TaskInputViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> saveTask() async {
+  String? _taskId;
+  
+  void initFromTask(dynamic task) {
+    if (_taskId != null) return; // already inited
+    _taskId = task.id;
+    _title = task.title;
+    _description = task.description ?? '';
+    _deadline = 'Today'; // Keep simple logic or parse custom
+    // Importance, diff, urg aren't in TaskItem directly from mock server right now but we can mock
+    _importance = 3;
+    _difficulty = 3;
+    _urgency = 3;
+    notifyListeners();
+  }
+
+  Future<bool> updateTask() async {
     if (!isValid) return false;
 
     _isLoading = true;
@@ -106,15 +121,14 @@ class TaskInputViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _taskRepo.createTask(
-        title: _title,
-        description: _description.isEmpty ? null : _description,
-        attachment: _attachmentName,
-        importance: _importance,
-        difficulty: _difficulty,
-        urgency: _urgency,
-        deadline: _resolveDeadlineToISO(),
-      );
+      await _taskRepo.updateTask(_taskId!, {
+        'title': _title,
+        'description': _description.isEmpty ? null : _description,
+        'importance': _importance,
+        'difficulty': _difficulty,
+        'urgency': _urgency,
+        'deadline': _resolveDeadlineToISO(),
+      });
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

@@ -216,6 +216,17 @@ class TaskListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteTask(String taskId) async {
+    try {
+      await _taskRepo.deleteTask(taskId);
+      _allTasks.removeWhere((t) => t.id == taskId);
+      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+    }
+  }
+
   Future<void> completeTask(String taskId) async {
     try {
       await _taskRepo.completeTask(taskId);
