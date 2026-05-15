@@ -5,6 +5,9 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
+import '../../../../shared/repositories/auth_repository.dart';
+import '../../../../shared/services/api_client.dart';
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -14,6 +17,7 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+  final AuthRepository _authRepo = AuthRepository();
   bool _isSubmitting = false;
 
   Future<void> _submit() async {
@@ -24,19 +28,33 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       _isSubmitting = true;
     });
 
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final email = _formKey.currentState!.value['email'] as String;
+      await _authRepo.forgotPassword(email);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password reset link sent to your email.')),
-    );
-    Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset link sent to your email.')),
+      );
+      Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send reset link. Please try again.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override

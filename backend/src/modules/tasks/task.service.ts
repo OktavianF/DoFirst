@@ -170,6 +170,81 @@ export class TaskService {
   }
 
   /**
+   * Update an existing task. Recalculates score after update.
+   */
+  async updateTask(
+    userId: string,
+    taskId: string,
+    data: {
+      title?: string;
+      description?: string | null;
+      importance?: number;
+      difficulty?: number;
+      urgency?: number;
+      deadline?: string | null;
+      tags?: string[];
+      fileUrl?: string | null;
+    }
+  ) {
+    const existing = await taskRepository.findById(taskId, userId);
+    if (!existing) {
+      throw AppError.notFound('Task not found');
+    }
+
+    const importance = data.importance !== undefined
+      ? Math.min(5, Math.max(1, data.importance))
+      : existing.importance;
+    const difficulty = data.difficulty !== undefined
+      ? Math.min(5, Math.max(1, data.difficulty))
+      : existing.difficulty;
+    const urgency = data.urgency !== undefined
+      ? Math.min(5, Math.max(1, data.urgency))
+      : existing.urgency;
+
+    let deadline: Date | null | undefined = undefined;
+    if (data.deadline === null) {
+      deadline = null;
+    } else if (data.deadline !== undefined) {
+      deadline = this.parseDeadline(data.deadline) ?? null;
+    } else {
+      deadline = existing.deadline;
+    }
+
+    const deadlineScore = this.calculateDeadlineScore(deadline);
+    const score = this.calculateScore(importance, urgency, difficulty, deadlineScore);
+    const priority = this.derivePriority(score);
+
+    const updateData: Record<string, unknown> = {
+      importance,
+      difficulty,
+      urgency,
+      score,
+      priority,
+      deadline,
+    };
+
+    if (data.title !== undefined) updateData.title = data.title.trim();
+    if (data.description !== undefined) updateData.description = data.description?.trim() || null;
+    if (data.tags !== undefined) updateData.tags = data.tags;
+    if (data.fileUrl !== undefined) updateData.fileUrl = data.fileUrl;
+
+    return taskRepository.updateAndReturn(taskId, userId, updateData);
+  }
+
+  /**
+   * Delete a task permanently (without archiving).
+   */
+  async deleteTask(userId: string, taskId: string) {
+    const task = await taskRepository.findById(taskId, userId);
+    if (!task) {
+      throw AppError.notFound('Task not found');
+    }
+
+    await taskRepository.delete(taskId, userId);
+    return { message: 'Task deleted successfully' };
+  }
+
+  /**
    * Get all tasks for a user, with scores recalculated dynamically
    * based on current deadline proximity.
    */
@@ -191,7 +266,7 @@ export class TaskService {
   }
 
   /**
-   * Complete a task: deletes it from the database.
+   * Complete a task: archives it to completed_tasks, then deletes from active tasks.
    * The heroTask on the dashboard will automatically shift to the next highest-scored task.
    */
   async completeTask(userId: string, taskId: string) {
@@ -200,7 +275,24 @@ export class TaskService {
       throw AppError.notFound('Task not found');
     }
 
+    // Archive to completed_tasks for history
+    await taskRepository.archiveTask({
+      userId: task.userId,
+      title: task.title,
+      description: task.description,
+      importance: task.importance,
+      difficulty: task.difficulty,
+      urgency: task.urgency,
+      score: task.score,
+      priority: task.priority,
+      tags: task.tags,
+      focusDuration: task.focusDuration ?? 0,
+      fileUrl: task.fileUrl,
+    });
+
+    // Delete from active tasks
     await taskRepository.delete(taskId, userId);
-    return { message: 'Task completed and removed', task };
+
+    return { message: 'Task completed and archived', task };
   }
 }

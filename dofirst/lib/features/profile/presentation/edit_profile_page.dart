@@ -1,11 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../shared/theme/app_theme.dart';
+import '../../../shared/theme/app_theme.dart';
+import '../../../shared/repositories/auth_repository.dart';
+import '../../../shared/services/api_client.dart';
 import 'profile_view_model.dart';
 
-class EditProfilePage extends StatelessWidget {
+class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
+
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  final AuthRepository _authRepo = AuthRepository();
+  late TextEditingController _nameController;
+  bool _isSaving = false;
+  bool _inited = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_inited) {
+      final vm = context.read<ProfileViewModel>();
+      _nameController = TextEditingController(text: vm.fullName);
+      _inited = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name cannot be empty')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await _authRepo.updateProfile(fullName: name);
+      if (!mounted) return;
+
+      // Update local ViewModel
+      final vm = context.read<ProfileViewModel>();
+      vm.loadProfile();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
+      Navigator.pop(context);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update profile')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,18 +167,16 @@ class EditProfilePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    _buildInputField(
+                    _buildEditableField(
                       label: 'Full Name',
-                      value: vm.fullName,
+                      controller: _nameController,
                       icon: Icons.person_outline,
-                      onEdit: () {},
                     ),
                     const SizedBox(height: 24),
                     _buildInputField(
                       label: 'Email',
                       value: vm.email,
                       icon: Icons.mail_outline,
-                      onEdit: () {},
                     ),
                   ],
                 ),
@@ -124,25 +188,31 @@ class EditProfilePage extends StatelessWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Logic go back / save
-                    Navigator.pop(context);
-                  },
+                  onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3F37C9), // Deep blue-purple
+                    backgroundColor: const Color(0xFF3F37C9),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -152,11 +222,64 @@ class EditProfilePage extends StatelessWidget {
     );
   }
 
+  Widget _buildEditableField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF191C1D),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F6F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: const Color(0xFF3F37C9), size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF191C1D),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInputField({
     required String label,
     required String value,
     required IconData icon,
-    required VoidCallback onEdit,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +304,7 @@ class EditProfilePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4F6F9), // Light background for icon
+                  color: const Color(0xFFF4F6F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: const Color(0xFF3F37C9), size: 24),
@@ -196,12 +319,7 @@ class EditProfilePage extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.edit_square, color: Color(0xFF3F37C9)),
-                onPressed: onEdit,
-              ),
+              const Icon(Icons.lock_outline, color: Color(0xFF9E9E9E), size: 20),
             ],
           ),
         ),

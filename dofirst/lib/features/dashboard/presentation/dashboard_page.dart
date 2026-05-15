@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../shared/widgets/app_top_nav_bar.dart';
 import '../../../shared/widgets/history_item_card.dart';
@@ -7,6 +8,7 @@ import '../../home/presentation/home_page.dart';
 import '../../tasks/presentation/task_list/task_list_page.dart';
 import '../../profile/presentation/profile_page.dart';
 import '../../history/presentation/history_page.dart';
+import 'dashboard_view_model.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -20,47 +22,59 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            const AppTopNavBar(),
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _buildTitle(),
-                        const SizedBox(height: 24),
-                        _buildSummaryCards(),
-                        const SizedBox(height: 24),
-                        _buildTasksDoneCard(),
-                        const SizedBox(height: 24),
-                        _buildAverageFocusCard(),
-                        const SizedBox(height: 24),
-                        _buildAddTaskButton(context),
-                        const SizedBox(height: 32),
-                        _buildHistoryHeader(context),
-                        const SizedBox(height: 16),
-                        _buildTasksList(),
-                        const SizedBox(height: 100), // padding for bottom nav
-                      ]),
-                    ),
+    return ChangeNotifierProvider(
+      create: (_) => DashboardViewModel(),
+      child: Consumer<DashboardViewModel>(
+        builder: (context, vm, _) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F9FA),
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  const AppTopNavBar(),
+                  Expanded(
+                    child: vm.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : RefreshIndicator(
+                            onRefresh: () => vm.loadDashboard(),
+                            child: CustomScrollView(
+                              slivers: [
+                                SliverPadding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                                  sliver: SliverList(
+                                    delegate: SliverChildListDelegate([
+                                      _buildTitle(),
+                                      const SizedBox(height: 24),
+                                      _buildSummaryCards(vm),
+                                      const SizedBox(height: 24),
+                                      _buildTasksDoneCard(vm),
+                                      const SizedBox(height: 24),
+                                      _buildAverageFocusCard(vm),
+                                      const SizedBox(height: 24),
+                                      _buildAddTaskButton(context),
+                                      const SizedBox(height: 32),
+                                      _buildHistoryHeader(context),
+                                      const SizedBox(height: 16),
+                                      _buildTasksList(vm),
+                                      const SizedBox(height: 100), // padding for bottom nav
+                                    ]),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-      extendBody: true,
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: 2,
-        onTap: (index) => _onBottomNavTap(context, index),
+            extendBody: true,
+            bottomNavigationBar: AppBottomNavBar(
+              currentIndex: 2,
+              onTap: (index) => _onBottomNavTap(context, index),
+            ),
+          );
+        },
       ),
     );
   }
@@ -79,28 +93,28 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards(DashboardViewModel vm) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildSmallCard(
           title: 'Total Tasks',
-          subtitle: 'All tasks',
-          value: '24',
+          subtitle: 'Active',
+          value: '${vm.totalTasks}',
           iconColor: const Color(0xFFEEF2FF),
           iconData: Icons.folder_outlined,
         ),
         _buildSmallCard(
           title: 'High Priority',
           subtitle: 'Needs attention',
-          value: '5',
+          value: '${vm.highPriorityCount}',
           iconColor: const Color(0xFFFFDAD8),
           iconData: Icons.warning_amber_rounded,
         ),
         _buildSmallCard(
-          title: 'All Tasks',
-          subtitle: 'Tasks',
-          value: '12',
+          title: 'Completed',
+          subtitle: 'Tasks done',
+          value: '${vm.completedTasksCount}',
           iconColor: const Color(0xFFF0F0FF),
           iconData: Icons.task_alt,
         ),
@@ -168,7 +182,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTasksDoneCard() {
+  Widget _buildTasksDoneCard(DashboardViewModel vm) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
@@ -211,9 +225,9 @@ class DashboardPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            '1',
-            style: TextStyle(
+          Text(
+            '${vm.completedTasksCount}',
+            style: const TextStyle(
               fontFamily: 'Plus Jakarta Sans',
               fontWeight: FontWeight.bold,
               fontSize: 48,
@@ -225,7 +239,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAverageFocusCard() {
+  Widget _buildAverageFocusCard(DashboardViewModel vm) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24.0),
@@ -271,20 +285,20 @@ class DashboardPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
+                    children: [
                       Text(
-                        '3.5h ',
-                        style: TextStyle(
+                        vm.averageFocusFormatted,
+                        style: const TextStyle(
                           fontFamily: 'Plus Jakarta Sans',
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
                           color: Color(0xFF191C1D),
                         ),
                       ),
-                      Padding(
+                      const Padding(
                         padding: EdgeInsets.only(bottom: 4.0),
                         child: Text(
-                          'per day',
+                          ' per day',
                           style: TextStyle(
                             fontFamily: 'Plus Jakarta Sans',
                             fontSize: 14,
@@ -391,15 +405,48 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTasksList() {
+  Widget _buildTasksList(DashboardViewModel vm) {
+    if (vm.recentHistory.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: Text(
+            'No completed tasks yet.\nFinish a task to see it here!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Color(0xFF777587),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
-      children: const [
-        HistoryItemCard(title: 'Finish PRD Draft', subtitle: 'Today, 5:00 PM'),
-        HistoryItemCard(title: 'Client Feedback Review', subtitle: 'Yesterday, 2:00 PM'),
-        HistoryItemCard(title: 'Weekly Team Sync', subtitle: 'Wed, 10:00 AM'),
-        HistoryItemCard(title: 'Update Product Roadmap', subtitle: 'Tue, 4:30 PM'),
-      ],
+      children: vm.recentHistory.map((task) {
+        final completedAt = task['completedAt'] as String?;
+        String subtitle = '';
+        if (completedAt != null) {
+          final dt = DateTime.tryParse(completedAt);
+          if (dt != null) {
+            final local = dt.toLocal();
+            final now = DateTime.now();
+            final diff = now.difference(local);
+            if (diff.inDays == 0) {
+              subtitle = 'Today, ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
+            } else if (diff.inDays == 1) {
+              subtitle = 'Yesterday, ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
+            } else {
+              subtitle = '${local.day}/${local.month}/${local.year}';
+            }
+          }
+        }
+        return HistoryItemCard(
+          title: task['title'] as String? ?? 'Untitled',
+          subtitle: subtitle,
+        );
+      }).toList(),
     );
   }
 }
-

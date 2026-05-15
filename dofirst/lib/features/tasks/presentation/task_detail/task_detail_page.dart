@@ -12,6 +12,25 @@ class TaskDetailPage extends StatelessWidget {
 
   const TaskDetailPage({super.key, required this.task});
 
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  String _formatCreatedDate(DateTime? dt) {
+    if (dt == null) return 'Unknown date';
+    final local = dt.toLocal();
+    return '${_months[local.month - 1]} ${local.day}, ${local.year}';
+  }
+
+  String _formatCreatedTime(DateTime? dt) {
+    if (dt == null) return '';
+    final local = dt.toLocal();
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final ampm = local.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:${local.minute.toString().padLeft(2, '0')} $ampm';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,18 +237,18 @@ class TaskDetailPage extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
-                                        'October 20, 2024',
-                                        style: TextStyle(
+                                        _formatCreatedDate(task.createdAt),
+                                        style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                           color: Color(0xFF191C1D),
                                         ),
                                       ),
                                       Text(
-                                        '10:30 AM',
-                                        style: TextStyle(
+                                        _formatCreatedTime(task.createdAt),
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFF777587),
                                         ),
@@ -244,6 +263,7 @@ class TaskDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
+                    if (task.fileUrl != null) ...[
                     const Text(
                       'ATTACHMENTS',
                       style: TextStyle(
@@ -272,35 +292,27 @@ class TaskDetailPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFBA1A1A),
+                              color: const Color(0xFF3525CD),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text('PDF', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                            child: const Icon(Icons.attach_file, color: Colors.white, size: 16),
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'Q4 Strategy Draft V2.pdf',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF191C1D),
-                                ),
+                          Expanded(
+                            child: Text(
+                              Uri.tryParse(task.fileUrl!)?.pathSegments.last ?? 'Attachment',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF191C1D),
                               ),
-                              Text(
-                                '2.4 MB',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF777587),
-                                ),
-                              ),
-                            ],
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),

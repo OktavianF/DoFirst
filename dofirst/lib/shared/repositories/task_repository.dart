@@ -48,7 +48,7 @@ class TaskRepository {
   }
 
   Future<void> completeTask(String id) async {
-    await ApiClient.delete('/tasks/$id/complete');
+    await ApiClient.post('/tasks/$id/complete', body: {});
   }
 
   Future<Map<String, dynamic>> getDashboard() async {

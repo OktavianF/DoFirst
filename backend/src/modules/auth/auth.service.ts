@@ -130,6 +130,19 @@ export class AuthService {
   }
 
   /**
+   * Send a password reset email via Supabase Auth.
+   */
+  async forgotPassword(email: string) {
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email);
+
+    if (error) {
+      throw AppError.badRequest(error.message);
+    }
+
+    return { message: 'Password reset link sent to your email' };
+  }
+
+  /**
    * Sign in with Google ID token.
    */
   async googleSignIn(idToken: string) {

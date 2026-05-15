@@ -99,4 +99,25 @@ class AuthRepository {
     await GoogleSignIn.instance.disconnect();
     await ApiClient.clearTokens();
   }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final response = await ApiClient.post(
+      '/auth/forgot-password',
+      body: {'email': email},
+      withAuth: false,
+    );
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? fullName,
+    String? avatarUrl,
+  }) async {
+    final body = <String, dynamic>{};
+    if (fullName != null) body['fullName'] = fullName;
+    if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
+
+    final response = await ApiClient.put('/profile', body: body);
+    return response['data'] as Map<String, dynamic>;
+  }
 }

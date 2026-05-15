@@ -105,11 +105,26 @@ class EditTaskViewModel extends ChangeNotifier {
     _taskId = task.id;
     _title = task.title;
     _description = task.description ?? '';
-    _deadline = 'Today'; // Keep simple logic or parse custom
-    // Importance, diff, urg aren't in TaskItem directly from mock server right now but we can mock
-    _importance = 3;
-    _difficulty = 3;
-    _urgency = 3;
+
+    // Load real values from TaskItem
+    _importance = task.importance ?? 3;
+    _difficulty = task.difficulty ?? 3;
+    _urgency = task.urgency ?? 3;
+
+    // Parse deadline
+    if (task.deadline != null) {
+      _customDeadlineDateTime = task.deadline;
+      _deadline = 'Custom';
+    } else {
+      _deadline = 'Today';
+    }
+
+    // Load file attachment
+    if (task.fileUrl != null) {
+      final uri = Uri.tryParse(task.fileUrl);
+      _attachmentName = uri?.pathSegments.last ?? 'Attachment';
+    }
+
     notifyListeners();
   }
 

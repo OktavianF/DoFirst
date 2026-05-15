@@ -9,6 +9,12 @@ class TaskItem {
   final String priority;
   final String? description;
   final DateTime? deadline;
+  final int importance;
+  final int difficulty;
+  final int urgency;
+  final List<String> tags;
+  final DateTime? createdAt;
+  final String? fileUrl;
 
   TaskItem({
     required this.id,
@@ -17,6 +23,12 @@ class TaskItem {
     required this.priority,
     this.description,
     this.deadline,
+    this.importance = 3,
+    this.difficulty = 3,
+    this.urgency = 3,
+    this.tags = const [],
+    this.createdAt,
+    this.fileUrl,
   });
 
   /// Format deadline as a human-readable countdown including minutes.
@@ -53,6 +65,15 @@ class TaskItem {
       deadline = DateTime.tryParse(deadlineStr);
     }
 
+    final createdAtStr = json['createdAt'] as String? ?? json['created_at'] as String?;
+    DateTime? createdAt;
+    if (createdAtStr != null) {
+      createdAt = DateTime.tryParse(createdAtStr);
+    }
+
+    final rawTags = json['tags'] as List<dynamic>?;
+    final tags = rawTags?.map((t) => t.toString()).toList() ?? [];
+
     return TaskItem(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
@@ -60,6 +81,12 @@ class TaskItem {
       priority: (json['priority'] as String?)?.toUpperCase() ?? 'MEDIUM',
       description: json['description'] as String?,
       deadline: deadline,
+      importance: json['importance'] as int? ?? 3,
+      difficulty: json['difficulty'] as int? ?? 3,
+      urgency: json['urgency'] as int? ?? 3,
+      tags: tags,
+      createdAt: createdAt,
+      fileUrl: json['fileUrl'] as String? ?? json['file_url'] as String?,
     );
   }
 }

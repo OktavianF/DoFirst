@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../shared/services/focus_notification_service.dart';
+import '../../../../shared/repositories/focus_repository.dart';
 
 class FocusSessionViewModel extends ChangeNotifier {
   static const int _focusMinutes = 25;
@@ -13,6 +14,13 @@ class FocusSessionViewModel extends ChangeNotifier {
   Timer? _timer;
 
   final FocusNotificationService _notificationService = FocusNotificationService();
+  final FocusRepository _focusRepo = FocusRepository();
+
+  /// Optional: the current task being focused on
+  String? currentTaskId;
+
+  /// Tracks elapsed time for the current focus session
+  int _elapsedSeconds = 0;
 
   int get remainingSeconds => _remainingSeconds;
   bool get isRunning => _isRunning;
@@ -48,20 +56,25 @@ class FocusSessionViewModel extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         _remainingSeconds--;
+        _elapsedSeconds++;
         notifyListeners();
       } else {
         _timer?.cancel();
         if (!_isBreakMode) {
-          // Focus session finished → notify + switch to break mode
+          // Focus session finished → record to API + notify + switch to break mode
+          _recordSession('focus');
           _notificationService.notifyFocusComplete();
           _isBreakMode = true;
           _remainingSeconds = _breakMinutes * 60;
+          _elapsedSeconds = 0;
           _startTimer(); // Auto-start break
         } else {
-          // Break finished → notify + switch back to focus mode
+          // Break finished → record to API + notify + switch back to focus mode
+          _recordSession('break');
           _notificationService.notifyBreakComplete();
           _isBreakMode = false;
           _remainingSeconds = _focusMinutes * 60;
+          _elapsedSeconds = 0;
           _startTimer(); // Auto-start next focus session
         }
       }
@@ -76,10 +89,32 @@ class FocusSessionViewModel extends ChangeNotifier {
   }
 
   void stopTimer() {
+    // Record partial session if meaningful (>= 1 minute)
+    if (_elapsedSeconds >= 60) {
+      _recordSession(_isBreakMode ? 'break' : 'focus');
+    }
     _pauseTimer();
     _isBreakMode = false;
     _remainingSeconds = _focusMinutes * 60;
+    _elapsedSeconds = 0;
     notifyListeners();
+  }
+
+  /// Record the completed session to the backend API.
+  Future<void> _recordSession(String type) async {
+    final minutes = (_elapsedSeconds / 60).ceil();
+    if (minutes <= 0) return;
+
+    try {
+      await _focusRepo.recordSession(
+        taskId: currentTaskId,
+        durationMinutes: minutes,
+        sessionType: type,
+      );
+    } catch (e) {
+      // Don't disrupt the UI if recording fails — it's best-effort
+      debugPrint('Failed to record focus session: $e');
+    }
   }
 
   @override

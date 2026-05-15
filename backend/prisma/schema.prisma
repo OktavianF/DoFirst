@@ -12,29 +12,117 @@ model Profile {
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  tasks     Task[]
+
+  tasks          Task[]
+  completedTasks CompletedTask[]
+  focusSessions  FocusSession[]
+  settings       UserSettings?
+  notifications  Notification[]
 
   @@map("profiles")
 }
 
 model Task {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String    @map("user_id") @db.Uuid
-  title       String
-  description String?
-  importance  Int       @default(3)
-  difficulty  Int       @default(3)
-  urgency     Int       @default(3)
-  score       Float     @default(0)
-  priority    String    @default("MEDIUM")
-  deadline    DateTime?
-  tags        String[]  @default([])
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  title          String
+  description    String?
+  importance     Int       @default(3)
+  difficulty     Int       @default(3)
+  urgency        Int       @default(3)
+  score          Float     @default(0)
+  priority       String    @default("MEDIUM")
+  deadline       DateTime?
+  tags           String[]  @default([])
+  isCompleted    Boolean   @default(false) @map("is_completed")
+  completedAt    DateTime? @map("completed_at")
+  focusDuration  Int?      @map("focus_duration")
+  fileUrl        String?   @map("file_url")
+  lastNotifiedAt DateTime? @map("last_notified_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  focusSessions FocusSession[]
+  notifications Notification[]
 
   @@index([userId])
   @@index([userId, score(sort: Desc)])
   @@map("tasks")
+}
+
+model CompletedTask {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  title         String
+  description   String?
+  importance    Int      @default(3)
+  difficulty    Int      @default(3)
+  urgency       Int      @default(3)
+  score         Float    @default(0)
+  priority      String   @default("MEDIUM")
+  tags          String[] @default([])
+  focusDuration Int      @default(0) @map("focus_duration")
+  fileUrl       String?  @map("file_url")
+  completedAt   DateTime @default(now()) @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, completedAt(sort: Desc)])
+  @@map("completed_tasks")
+}
+
+model FocusSession {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  taskId          String?   @map("task_id") @db.Uuid
+  durationMinutes Int       @default(25) @map("duration_minutes")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  sessionType     String    @default("focus") @map("session_type")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("focus_sessions")
+}
+
+model UserSettings {
+  userId                  String   @id @map("user_id") @db.Uuid
+  focusDuration           Int      @default(25) @map("focus_duration")
+  shortBreak              Int      @default(5) @map("short_break")
+  longBreak               Int      @default(15) @map("long_break")
+  sessionsBeforeLongBreak Int      @default(4) @map("sessions_before_long_break")
+  vibration               Boolean  @default(true)
+  autoStartNextSession    Boolean  @default(true) @map("auto_start_next_session")
+  autoStartBreak          Boolean  @default(false) @map("auto_start_break")
+  sound                   String   @default("Chime")
+  fcmToken                String?  @map("fcm_token")
+  updatedAt               DateTime @default(now()) @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  message   String?
+  type      String   @default("info")
+  isRead    Boolean  @default(false) @map("is_read")
+  taskId    String?  @map("task_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
 }

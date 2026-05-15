@@ -48,6 +48,34 @@ export class TaskController {
     }
   }
 
+  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      const task = await taskService.updateTask(user.id, req.params.id as string, req.body);
+
+      res.json({
+        success: true,
+        data: task,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      const result = await taskService.deleteTask(user.id, req.params.id as string);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async complete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user } = req as AuthenticatedRequest;
