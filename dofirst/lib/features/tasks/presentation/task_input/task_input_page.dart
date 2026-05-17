@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../home/presentation/home_view_model.dart';
 import '../../../profile/presentation/profile_view_model.dart';
@@ -184,9 +185,15 @@ fontSize: 18,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        // Mock file picker
-                        viewModel.updateAttachment('document_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                      onTap: () async {
+                        final result = await FilePicker.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+                        );
+                        if (result != null && result.files.isNotEmpty) {
+                          final file = result.files.first;
+                          viewModel.updateAttachment(file.name, file.path);
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

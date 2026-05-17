@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 import '../services/api_client.dart';
 
 class AuthRepository {
@@ -67,7 +69,7 @@ class AuthRepository {
 
     final idToken = account.authentication.idToken;
     if (idToken == null) {
-      throw ApiException(statusCode: 0, message: 'Failed to get Google ID token');
+      throw ApiException('Failed to get Google ID token', statusCode: 0);
     }
 
     final response = await ApiClient.post(
@@ -119,5 +121,24 @@ class AuthRepository {
 
     final response = await ApiClient.put('/profile', body: body);
     return response['data'] as Map<String, dynamic>;
+  }
+
+  /// Upload avatar image to backend via multipart POST
+  Future<Map<String, dynamic>> uploadAvatar(File file) async {
+    final token = await ApiClient.getToken();
+    final uri = Uri.parse('${ApiClient.baseUrl}/upload/avatar');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
+
+    if (streamedResponse.statusCode != 200) {
+      throw ApiException('Upload failed: ${streamedResponse.statusCode}');
+    }
+
+    final decoded = ApiClient.decodeJson(responseBody);
+    return decoded['data'] as Map<String, dynamic>;
   }
 }

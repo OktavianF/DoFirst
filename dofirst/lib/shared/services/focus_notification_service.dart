@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Singleton service for focus session notifications and alert sounds.
 class FocusNotificationService {
@@ -10,6 +11,18 @@ class FocusNotificationService {
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _initialized = false;
+
+  /// Available sound options
+  static const List<String> availableSounds = ['Chime', 'Ding', 'Bell', 'Gong', 'Silent'];
+
+  /// Map sound name to asset file
+  static const Map<String, String> _soundFiles = {
+    'chime': 'sounds/chime.mp3',
+    'ding': 'sounds/ding.mp3',
+    'bell': 'sounds/bell.mp3',
+    'gong': 'sounds/gong.mp3',
+    'silent': '', // No sound
+  };
 
   /// Initialize the notification plugin. Call once at app startup.
   Future<void> init() async {
@@ -28,7 +41,41 @@ class FocusNotificationService {
     _initialized = true;
   }
 
-  /// Show a notification popup AND play an alert sound.
+  /// Get the user's preferred sound from SharedPreferences
+  Future<String> _getSoundPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('cached_settings_sound');
+      return cached ?? 'chime';
+    } catch (_) {
+      return 'chime';
+    }
+  }
+
+  /// Save sound preference locally for quick access
+  Future<void> saveSoundPreference(String soundName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cached_settings_sound', soundName.toLowerCase());
+  }
+
+  /// Play a specific sound by name
+  Future<void> playSound(String soundName) async {
+    final key = soundName.toLowerCase();
+    if (key == 'silent') return;
+
+    final assetPath = _soundFiles[key];
+    if (assetPath == null || assetPath.isEmpty) return;
+
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.setSource(AssetSource(assetPath));
+      await _audioPlayer.resume();
+    } catch (_) {
+      // Fallback: notification itself will still ring via system default
+    }
+  }
+
+  /// Show a notification popup AND play the user's preferred alert sound.
   Future<void> notify({
     required String title,
     required String body,
@@ -55,21 +102,16 @@ class FocusNotificationService {
       details,
     );
 
-    // Play alert sound using system notification ringtone
-    try {
-      await _audioPlayer.setSource(AssetSource('sounds/notification.mp3'));
-      await _audioPlayer.resume();
-    } catch (_) {
-      // Fallback: If no custom sound file, the notification itself will still ring
-      // via the system default notification sound (playSound: true above)
-    }
+    // Play user's preferred sound
+    final soundPref = await _getSoundPreference();
+    await playSound(soundPref);
   }
 
   /// Notify that a focus session has ended.
   Future<void> notifyFocusComplete() async {
     await notify(
       title: '🎯 Focus Session Complete!',
-      body: 'Great work! Time for a 5-minute break.',
+      body: 'Great work! Time for a break.',
     );
   }
 
@@ -77,7 +119,7 @@ class FocusNotificationService {
   Future<void> notifyBreakComplete() async {
     await notify(
       title: '☕ Break\'s Over!',
-      body: 'Let\'s get back to focusing. 25 minutes starts now!',
+      body: 'Let\'s get back to focusing!',
     );
   }
 

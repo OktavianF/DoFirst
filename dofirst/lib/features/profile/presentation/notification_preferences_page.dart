@@ -8,11 +8,11 @@ class NotificationPreferencesPage extends StatefulWidget {
 }
 
 class _NotificationPreferencesPageState extends State<NotificationPreferencesPage> {
-  bool enableNotifications = true;
-  bool taskReminders = true;
-  bool focusSessionAlerts = true;
-  bool breakReminders = true;
-  bool streakUpdates = true;
+  bool enableNotifications = false;
+  bool taskReminders = false;
+  bool focusSessionAlerts = false;
+  bool breakReminders = false;
+  bool streakUpdates = false;
 
   @override
   Widget build(BuildContext context) {

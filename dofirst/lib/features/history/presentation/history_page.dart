@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../shared/widgets/history_item_card.dart';
 import 'history_view_model.dart';
 
@@ -45,28 +46,26 @@ class HistoryPage extends StatelessWidget {
                       onRefresh: () => vm.loadHistory(refresh: true),
                       child: vm.tasks.isEmpty
                           ? ListView(
-                              children: const [
-                                SizedBox(height: 120),
+                              children: [
+                                const SizedBox(height: 120),
                                 Center(
                                   child: Column(
                                     children: [
-                                      Icon(Icons.history, size: 64, color: Color(0xFFBBBBBB)),
-                                      SizedBox(height: 16),
+                                      const Icon(Icons.history, size: 64, color: Color(0xFFBBBBBB)),
+                                      const SizedBox(height: 16),
                                       Text(
                                         'No completed tasks yet',
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
+                                        style: GoogleFonts.lexend(
                                           fontSize: 16,
-                                          color: Color(0xFF777587),
+                                          color: const Color(0xFF777587),
                                         ),
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         'Complete a task to see it here!',
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
+                                        style: GoogleFonts.lexend(
                                           fontSize: 14,
-                                          color: Color(0xFF999999),
+                                          color: const Color(0xFF999999),
                                         ),
                                       ),
                                     ],
@@ -90,22 +89,20 @@ class HistoryPage extends StatelessWidget {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'History',
-                                        style: TextStyle(
-                                          fontFamily: 'Lexend',
+                                        style: GoogleFonts.lexend(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 32,
-                                          color: Color(0xFF191C1D),
+                                          color: const Color(0xFF191C1D),
                                           letterSpacing: -0.5,
                                         ),
                                       ),
                                       Text(
                                         '${vm.total} tasks',
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
+                                        style: GoogleFonts.lexend(
                                           fontSize: 14,
-                                          color: Color(0xFF777587),
+                                          color: const Color(0xFF777587),
                                         ),
                                       ),
                                     ],
@@ -118,6 +115,7 @@ class HistoryPage extends StatelessWidget {
                                         task['completedAt'] as String? ??
                                             task['completed_at'] as String?,
                                       ),
+                                      onTap: () => _showCompletedTaskDetail(context, task),
                                     );
                                   }),
                                   if (vm.isLoading)
@@ -133,6 +131,135 @@ class HistoryPage extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showCompletedTaskDetail(BuildContext context, Map<String, dynamic> task) {
+    final title = task['title'] as String? ?? 'Untitled';
+    final description = task['description'] as String?;
+    final completedAt = task['completedAt'] as String? ?? task['completed_at'] as String?;
+    final score = (task['score'] as num?)?.toStringAsFixed(1) ?? '-';
+    final importance = task['importance'] as int?;
+    final difficulty = task['difficulty'] as int?;
+    final urgency = task['urgency'] as int?;
+
+    String completedDate = '';
+    if (completedAt != null) {
+      final dt = DateTime.tryParse(completedAt);
+      if (dt != null) {
+        final local = dt.toLocal();
+        final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        completedDate = '${months[local.month - 1]} ${local.day}, ${local.year} at ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE2F5EA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle, color: Color(0xFF1E6C45), size: 26),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF191C1D),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3525CD).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Score $score',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3525CD),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF777587), height: 1.5),
+                ),
+              ],
+              const SizedBox(height: 20),
+              if (completedDate.isNotEmpty)
+                _detailRow(Icons.event_available, 'Completed', completedDate),
+              if (importance != null)
+                _detailRow(Icons.star_outline, 'Importance', 'Level $importance'),
+              if (difficulty != null)
+                _detailRow(Icons.fitness_center, 'Difficulty', ['Easy','Medium','Hard','Very Hard','Extreme'][difficulty.clamp(1,5) - 1]),
+              if (urgency != null)
+                _detailRow(Icons.speed, 'Urgency', ['Low','Medium-Low','Medium','Medium-High','High'][urgency.clamp(1,5) - 1]),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF777587)),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF777587)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF191C1D)),
+            ),
+          ),
+        ],
       ),
     );
   }

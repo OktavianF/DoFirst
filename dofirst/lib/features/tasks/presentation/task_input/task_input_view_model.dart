@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../../../shared/repositories/task_repository.dart';
 import '../../../../shared/services/api_client.dart';
@@ -8,6 +9,7 @@ class TaskInputViewModel extends ChangeNotifier {
   String _title = '';
   String _description = '';
   String? _attachmentName;
+  String? _attachmentPath;
   int _importance = 3;
   int _difficulty = 3;
   int _urgency = 3;
@@ -21,6 +23,7 @@ class TaskInputViewModel extends ChangeNotifier {
   String get title => _title;
   String get description => _description;
   String? get attachmentName => _attachmentName;
+  String? get attachmentPath => _attachmentPath;
   int get importance => _importance;
   int get difficulty => _difficulty;
   int get urgency => _urgency;
@@ -40,8 +43,9 @@ class TaskInputViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateAttachment(String? fileName) {
+  void updateAttachment(String? fileName, [String? filePath]) {
     _attachmentName = fileName;
+    _attachmentPath = filePath;
     notifyListeners();
   }
 
@@ -106,7 +110,7 @@ class TaskInputViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _taskRepo.createTask(
+      final result = await _taskRepo.createTask(
         title: _title,
         description: _description.isEmpty ? null : _description,
         attachment: _attachmentName,
@@ -115,6 +119,18 @@ class TaskInputViewModel extends ChangeNotifier {
         urgency: _urgency,
         deadline: _resolveDeadlineToISO(),
       );
+
+      // Upload attachment if a file was picked
+      if (_attachmentPath != null && result['id'] != null) {
+        try {
+          final taskId = result['id'] as String;
+          await _taskRepo.uploadTaskAttachment(taskId, File(_attachmentPath!));
+        } catch (e) {
+          // Attachment upload failure is non-critical
+          debugPrint('Attachment upload failed: $e');
+        }
+      }
+
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

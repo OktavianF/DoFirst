@@ -1,21 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../shared/theme/app_theme.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import '../task_list/task_list_view_model.dart';
 import '../task_input/edit_task_page.dart';
 import '../task_input/edit_task_view_model.dart';
+import '../../../home/presentation/home_view_model.dart';
+import '../../../profile/presentation/profile_view_model.dart';
 
-class TaskDetailPage extends StatelessWidget {
+class TaskDetailPage extends StatefulWidget {
   final TaskItem task;
 
   const TaskDetailPage({super.key, required this.task});
+
+  @override
+  State<TaskDetailPage> createState() => _TaskDetailPageState();
+}
+
+class _TaskDetailPageState extends State<TaskDetailPage> {
+  late TaskItem _task;
 
   static const _months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _task = widget.task;
+  }
+
+  /// Refresh the task data from the ViewModel after returning from Edit
+  void _refreshTask() {
+    final vm = context.read<TaskListViewModel>();
+    try {
+      final updated = vm.allTasks.firstWhere((t) => t.id == _task.id);
+      setState(() => _task = updated);
+    } catch (_) {
+      // Task may have been deleted or completed, pop immediately
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    }
+  }
 
   String _formatCreatedDate(DateTime? dt) {
     if (dt == null) return 'Unknown date';
@@ -29,6 +58,11 @@ class TaskDetailPage extends StatelessWidget {
     final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
     final ampm = local.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${local.minute.toString().padLeft(2, '0')} $ampm';
+  }
+
+  bool _isImageFile(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.gif') || lower.endsWith('.webp');
   }
 
   @override
@@ -70,9 +104,9 @@ class TaskDetailPage extends StatelessWidget {
                               width: 6,
                               height: 24,
                               decoration: BoxDecoration(
-                                color: task.priority == 'HIGH'
+                                color: _task.priority == 'HIGH'
                                     ? const Color(0xFF8B1A10)
-                                    : task.priority == 'MEDIUM'
+                                    : _task.priority == 'MEDIUM'
                                         ? const Color(0xFFF59E0B)
                                         : const Color(0xFF10B981),
                                 borderRadius: BorderRadius.circular(3),
@@ -80,14 +114,14 @@ class TaskDetailPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              '${task.priority} PRIORITY',
+                              '${_task.priority} PRIORITY',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
-                                color: task.priority == 'HIGH'
+                                color: _task.priority == 'HIGH'
                                     ? const Color(0xFF8B1A10)
-                                    : task.priority == 'MEDIUM'
+                                    : _task.priority == 'MEDIUM'
                                         ? const Color(0xFFF59E0B)
                                         : const Color(0xFF10B981),
                               ),
@@ -97,11 +131,11 @@ class TaskDetailPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3E5F5), // Light purple grey
+                            color: const Color(0xFFF3E5F5),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            'SCORE ${task.score}',
+                            'SCORE ${_task.score}',
                             style: const TextStyle(
                               color: Color(0xFF464555),
                               fontSize: 12,
@@ -126,7 +160,7 @@ class TaskDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      task.title,
+                      _task.title,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -139,7 +173,7 @@ class TaskDetailPage extends StatelessWidget {
                         const Icon(Icons.calendar_today, size: 16, color: Color(0xFF777587)),
                         const SizedBox(width: 8),
                         Text(
-                          task.timeText,
+                          _task.timeText,
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF777587),
@@ -159,7 +193,7 @@ class TaskDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      task.description ?? 'No description provided for this task.',
+                      _task.description ?? 'No description provided for this task.',
                       style: const TextStyle(
                         fontSize: 16,
                         height: 1.5,
@@ -239,7 +273,7 @@ class TaskDetailPage extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _formatCreatedDate(task.createdAt),
+                                        _formatCreatedDate(_task.createdAt),
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
@@ -247,7 +281,7 @@ class TaskDetailPage extends StatelessWidget {
                                         ),
                                       ),
                                       Text(
-                                        _formatCreatedTime(task.createdAt),
+                                        _formatCreatedTime(_task.createdAt),
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFF777587),
@@ -263,7 +297,7 @@ class TaskDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    if (task.fileUrl != null) ...[
+                    if (_task.fileUrl != null) ...[
                     const Text(
                       'ATTACHMENTS',
                       style: TextStyle(
@@ -274,6 +308,36 @@ class TaskDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    // Image preview if it's an image file
+                    if (_isImageFile(_task.fileUrl!))
+                      GestureDetector(
+                        onTap: () async {
+                          final uri = Uri.tryParse(_task.fileUrl!);
+                          if (uri != null && await canLaunchUrl(uri)) {
+                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        child: Container(
+                          height: 180,
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2DFFF)),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              _task.fileUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.broken_image, size: 48, color: Color(0xFF777587)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    // File info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -300,13 +364,38 @@ class TaskDetailPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              Uri.tryParse(task.fileUrl!)?.pathSegments.last ?? 'Attachment',
+                              Uri.tryParse(_task.fileUrl!)?.pathSegments.last ?? 'Attachment',
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF191C1D),
                               ),
                               overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // Download / Open button
+                          GestureDetector(
+                            onTap: () async {
+                              final uri = Uri.tryParse(_task.fileUrl!);
+                              if (uri != null) {
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Could not open attachment.')),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE2DFFF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.download, color: Color(0xFF3525CD), size: 18),
                             ),
                           ),
                         ],
@@ -323,16 +412,21 @@ class TaskDetailPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChangeNotifierProvider<EditTaskViewModel>(
                               create: (_) => EditTaskViewModel(),
-                              child: EditTaskPage(task: task),
+                              child: EditTaskPage(task: _task),
                             ),
                           ),
                         );
+                        // After returning from edit, reload tasks and refresh
+                        if (mounted) {
+                          await context.read<TaskListViewModel>().loadTasks();
+                          _refreshTask();
+                        }
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -400,9 +494,10 @@ class TaskDetailPage extends StatelessWidget {
               onPressed: () async {
                 Navigator.pop(dialogContext);
                 final vm = context.read<TaskListViewModel>();
-                // simulate delete or call repo if implemented in view model
-                await vm.deleteTask(task.id);
+                await vm.deleteTask(_task.id);
                 if (context.mounted) {
+                  context.read<HomeViewModel>().loadDashboard();
+                  context.read<ProfileViewModel>().loadProfile();
                   Navigator.pop(context);
                 }
               },

@@ -11,5 +11,6 @@ router.post('/google', controller.googleSignIn);
 router.get('/me', authMiddleware, controller.me);
 router.post('/refresh', controller.refresh);
 router.post('/forgot-password', controller.forgotPassword);
+router.post('/reset-password', controller.resetPassword);
 
 export { router as authRoutes };

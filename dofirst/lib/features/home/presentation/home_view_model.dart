@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/repositories/task_repository.dart';
 import '../../../../shared/services/api_client.dart';
+import '../../../../shared/services/push_notification_service.dart';
 import 'package:dofirst/features/tasks/presentation/task_list/task_list_view_model.dart';
 
 class UpcomingTask {
@@ -143,6 +144,9 @@ class HomeViewModel extends ChangeNotifier {
     }
     _errorMessage = null;
     notifyListeners();
+
+    // Initialize push notifications after login/app open
+    PushNotificationService().init();
 
     try {
       final data = await _taskRepo.getDashboard();

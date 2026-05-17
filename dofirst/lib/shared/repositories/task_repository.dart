@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import '../services/api_client.dart';
 
 class TaskRepository {
@@ -54,5 +56,24 @@ class TaskRepository {
   Future<Map<String, dynamic>> getDashboard() async {
     final response = await ApiClient.get('/dashboard');
     return response['data'] as Map<String, dynamic>;
+  }
+
+  /// Upload a file attachment to a task via multipart POST
+  Future<Map<String, dynamic>> uploadTaskAttachment(String taskId, File file) async {
+    final token = await ApiClient.getToken();
+    final uri = Uri.parse('${ApiClient.baseUrl}/upload/task-attachment/$taskId');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
+
+    if (streamedResponse.statusCode != 200 && streamedResponse.statusCode != 201) {
+      throw ApiException('Upload failed: ${streamedResponse.statusCode}');
+    }
+
+    final decoded = ApiClient.decodeJson(responseBody);
+    return decoded['data'] as Map<String, dynamic>;
   }
 }

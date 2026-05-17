@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:provider/provider.dart';
 import '../../../shared/repositories/auth_repository.dart';
@@ -272,16 +273,15 @@ class _ProfilePageContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
             'SETTINGS & ACCOUNT',
-            style: TextStyle(
-              fontFamily: 'Inter',
+            style: GoogleFonts.lexend(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
-              color: Color(0xFF464555),
+              color: const Color(0xFF464555),
             ),
           ),
         ),

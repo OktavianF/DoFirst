@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../shared/widgets/app_top_nav_bar.dart';
@@ -8,6 +9,7 @@ import '../../home/presentation/home_page.dart';
 import '../../tasks/presentation/task_list/task_list_page.dart';
 import '../../profile/presentation/profile_page.dart';
 import '../../history/presentation/history_page.dart';
+import '../../tasks/presentation/task_input/task_input_page.dart';
 import 'dashboard_view_model.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -56,7 +58,7 @@ class DashboardPage extends StatelessWidget {
                                       const SizedBox(height: 32),
                                       _buildHistoryHeader(context),
                                       const SizedBox(height: 16),
-                                      _buildTasksList(vm),
+                                      _buildTasksList(context, vm),
                                       const SizedBox(height: 100), // padding for bottom nav
                                     ]),
                                   ),
@@ -80,13 +82,13 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildTitle() {
-    return const Text(
+    return Text(
       'Your\nDashboard',
       style: TextStyle(
-        fontFamily: 'Lexend',
+        fontFamily: GoogleFonts.lexend().fontFamily,
         fontWeight: FontWeight.bold,
         fontSize: 36,
-        color: Color(0xFF191C1D),
+        color: const Color(0xFF191C1D),
         height: 1.1,
         letterSpacing: -0.9,
       ),
@@ -151,29 +153,29 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
-                fontFamily: 'Inter',
+              style: TextStyle(
+                fontFamily: GoogleFonts.lexend().fontFamily,
                 fontSize: 12,
-                color: Color(0xFF191C1D),
+                color: const Color(0xFF191C1D),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
-                fontFamily: 'Inter',
+              style: TextStyle(
+                fontFamily: GoogleFonts.lexend().fontFamily,
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
-                color: Color(0xFF191C1D),
+                color: const Color(0xFF191C1D),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(
-                fontFamily: 'Inter',
+              style: TextStyle(
+                fontFamily: GoogleFonts.lexend().fontFamily,
                 fontSize: 10,
-                color: Color(0xFF777587),
+                color: const Color(0xFF777587),
               ),
             ),
           ],
@@ -203,7 +205,7 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     'ALL',
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: GoogleFonts.lexend().fontFamily,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                       color: const Color(0xFFDAD7FF).withOpacity(0.8),
@@ -213,7 +215,7 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     'Tasks Done',
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: GoogleFonts.lexend().fontFamily,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                       color: const Color(0xFFDAD7FF).withOpacity(0.8),
@@ -227,11 +229,11 @@ class DashboardPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             '${vm.completedTasksCount}',
-            style: const TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
+            style: TextStyle(
+              fontFamily: GoogleFonts.lexend().fontFamily,
               fontWeight: FontWeight.bold,
               fontSize: 48,
-              color: Color(0xFFDAD7FF),
+              color: const Color(0xFFDAD7FF),
             ),
           ),
         ],
@@ -272,13 +274,13 @@ class DashboardPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'AVERAGE FOCUS',
                     style: TextStyle(
-                      fontFamily: 'Inter',
+                      fontFamily: GoogleFonts.lexend().fontFamily,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
-                      color: Color(0xFF464555),
+                      color: const Color(0xFF464555),
                       letterSpacing: 1.1,
                     ),
                   ),
@@ -288,21 +290,21 @@ class DashboardPage extends StatelessWidget {
                     children: [
                       Text(
                         vm.averageFocusFormatted,
-                        style: const TextStyle(
-                          fontFamily: 'Plus Jakarta Sans',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.lexend().fontFamily,
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
-                          color: Color(0xFF191C1D),
+                          color: const Color(0xFF191C1D),
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 4.0),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
                         child: Text(
                           ' per day',
                           style: TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
+                            fontFamily: GoogleFonts.lexend().fontFamily,
                             fontSize: 14,
-                            color: Color(0xFF464555),
+                            color: const Color(0xFF464555),
                           ),
                         ),
                       ),
@@ -352,11 +354,16 @@ class DashboardPage extends StatelessWidget {
         ),
         elevation: 0,
       ),
-      onPressed: () {},
-      child: const Text(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TaskInputPage()),
+        );
+      },
+      child: Text(
         '+ Add New Task',
         style: TextStyle(
-          fontFamily: 'Lexend',
+          fontFamily: GoogleFonts.lexend().fontFamily,
           fontWeight: FontWeight.bold,
           fontSize: 14,
           color: Colors.white,
@@ -371,13 +378,13 @@ class DashboardPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'History',
           style: TextStyle(
-            fontFamily: 'Lexend',
+            fontFamily: GoogleFonts.lexend().fontFamily,
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Color(0xFF191C1D),
+            color: const Color(0xFF191C1D),
           ),
         ),
         TextButton(
@@ -391,13 +398,13 @@ class DashboardPage extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
+          child: Text(
             'View All',
             style: TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: GoogleFonts.lexend().fontFamily,
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Color(0xFF3525CD),
+              color: const Color(0xFF3525CD),
             ),
           ),
         ),
@@ -405,18 +412,18 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTasksList(DashboardViewModel vm) {
+  Widget _buildTasksList(BuildContext context, DashboardViewModel vm) {
     if (vm.recentHistory.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
           child: Text(
             'No completed tasks yet.\nFinish a task to see it here!',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Inter',
+              fontFamily: GoogleFonts.lexend().fontFamily,
               fontSize: 14,
-              color: Color(0xFF777587),
+              color: const Color(0xFF777587),
             ),
           ),
         ),
@@ -445,8 +452,138 @@ class DashboardPage extends StatelessWidget {
         return HistoryItemCard(
           title: task['title'] as String? ?? 'Untitled',
           subtitle: subtitle,
+          onTap: () => _showCompletedTaskDetail(context, task),
         );
       }).toList(),
+    );
+  }
+
+  static void _showCompletedTaskDetail(BuildContext context, Map<String, dynamic> task) {
+    final title = task['title'] as String? ?? 'Untitled';
+    final description = task['description'] as String?;
+    final completedAt = task['completedAt'] as String?;
+    final score = (task['score'] as num?)?.toStringAsFixed(1) ?? '-';
+    final importance = task['importance'] as int?;
+    final difficulty = task['difficulty'] as int?;
+    final urgency = task['urgency'] as int?;
+
+    String completedDate = '';
+    if (completedAt != null) {
+      final dt = DateTime.tryParse(completedAt);
+      if (dt != null) {
+        final local = dt.toLocal();
+        final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        completedDate = '${months[local.month - 1]} ${local.day}, ${local.year} at ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E0E0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE2F5EA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle, color: Color(0xFF1E6C45), size: 26),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF191C1D),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3525CD).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Score $score',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF3525CD),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF777587), height: 1.5),
+                ),
+              ],
+              const SizedBox(height: 20),
+              if (completedDate.isNotEmpty)
+                _detailRow(Icons.event_available, 'Completed', completedDate),
+              if (importance != null)
+                _detailRow(Icons.star_outline, 'Importance', 'Level $importance'),
+              if (difficulty != null)
+                _detailRow(Icons.fitness_center, 'Difficulty', ['Easy','Medium','Hard','Very Hard','Extreme'][difficulty.clamp(1,5) - 1]),
+              if (urgency != null)
+                _detailRow(Icons.speed, 'Urgency', ['Low','Medium-Low','Medium','Medium-High','High'][urgency.clamp(1,5) - 1]),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _detailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF777587)),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF777587)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF191C1D)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

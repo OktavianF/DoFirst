@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -70,6 +71,60 @@ class _EditTaskContentState extends State<_EditTaskContent> {
     }
   }
 
+  /// Mark task as Done → complete it and move to history
+  void _onMarkDone(BuildContext context, EditTaskViewModel viewModel) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete Task'),
+        content: const Text('Mark this task as Done? It will be moved to history.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3F37C9)),
+            child: const Text('Complete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      final taskRepo = viewModel.taskRepo;
+      try {
+        await taskRepo.completeTask(widget.task.id);
+        if (context.mounted) {
+          context.read<HomeViewModel>().loadDashboard();
+          context.read<TaskListViewModel>().loadTasks();
+          context.read<ProfileViewModel>().loadProfile();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Task completed! Moved to history.')),
+          );
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to complete task: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  /// Compute priority label from importance
+  String _priorityLabel(int importance) {
+    if (importance >= 4) return 'High Priority';
+    if (importance >= 3) return 'Medium Priority';
+    return 'Low Priority';
+  }
+
+  /// Priority color from importance
+  Color _priorityColor(int importance) {
+    if (importance >= 4) return const Color(0xFF8B1A10);
+    if (importance >= 3) return const Color(0xFFF59E0B);
+    return const Color(0xFF10B981);
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<EditTaskViewModel>();
@@ -117,12 +172,12 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFE5E5),
+                            color: _priorityColor(viewModel.importance).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.error_outline,
-                            color: Color(0xFF8B1A10),
+                            color: _priorityColor(viewModel.importance),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -169,7 +224,7 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                     ),
                     const SizedBox(height: 24),
                     
-                    // Priority Row
+                    // Priority Row — dynamic from ViewModel
                     const Padding(
                       padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
                       child: Text(
@@ -195,15 +250,15 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF8B1A10),
+                                  decoration: BoxDecoration(
+                                    color: _priorityColor(viewModel.importance),
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'High Priority',
-                                  style: TextStyle(
+                                Text(
+                                  _priorityLabel(viewModel.importance),
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF191C1D),
@@ -221,9 +276,9 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Text(
-                              '9.8',
-                              style: TextStyle(
+                            child: Text(
+                              widget.task.score.toStringAsFixed(1),
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF191C1D),
@@ -258,7 +313,7 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Due Date & Time
+                    // Due Date & Time — tappable
                     const Padding(
                       padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
                       child: Text(
@@ -270,82 +325,89 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_outlined, size: 20, color: Color(0xFF777587)),
-                              const SizedBox(width: 12),
-                              Text(
-                                viewModel.deadline,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF191C1D),
+                    GestureDetector(
+                      onTap: () => _pickDeadline(context, viewModel),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined, size: 20, color: Color(0xFF777587)),
+                                const SizedBox(width: 12),
+                                Text(
+                                  viewModel.deadline,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF191C1D),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF777587)),
-                        ],
+                              ],
+                            ),
+                            const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF777587)),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // Status
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
-                      child: Text(
-                        'Status',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF777587),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'To Do',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF191C1D),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF777587)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    // TODO: Sprint 2 — Status field (To Do / Done dropdown)
+                    // Status field is hidden for now. Uncomment when ready.
+                    // const Padding(
+                    //   padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+                    //   child: Text(
+                    //     'Status',
+                    //     style: TextStyle(
+                    //       fontSize: 14,
+                    //       fontWeight: FontWeight.w600,
+                    //       color: Color(0xFF777587),
+                    //     ),
+                    //   ),
+                    // ),
+                    // GestureDetector(
+                    //   onTap: () => _showStatusPicker(context, viewModel),
+                    //   child: Container(
+                    //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.white,
+                    //       borderRadius: BorderRadius.circular(16),
+                    //     ),
+                    //     child: Row(
+                    //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //       children: [
+                    //         Row(
+                    //           children: [
+                    //             Container(
+                    //               width: 20,
+                    //               height: 20,
+                    //               decoration: BoxDecoration(
+                    //                 shape: BoxShape.circle,
+                    //                 border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
+                    //               ),
+                    //             ),
+                    //             const SizedBox(width: 12),
+                    //             const Text(
+                    //               'To Do',
+                    //               style: TextStyle(
+                    //                 fontSize: 14,
+                    //                 fontWeight: FontWeight.w500,
+                    //                 color: Color(0xFF191C1D),
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //         const Icon(Icons.keyboard_arrow_down, size: 20, color: Color(0xFF777587)),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 24),
 
                     // Description
                     const Padding(
@@ -405,7 +467,7 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Attachment
+                    // Attachment — dynamic
                     const Padding(
                       padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
                       child: Text(
@@ -417,51 +479,71 @@ class _EditTaskContentState extends State<_EditTaskContent> {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFBA1A1A),
-                              borderRadius: BorderRadius.circular(8),
+                    if (viewModel.attachmentName != null)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFBA1A1A),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _fileExtension(viewModel.attachmentName!).toUpperCase(),
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                            child: const Text('PDF', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  viewModel.attachmentName ?? 'Q4 Strategy Draft V2.pdf',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF191C1D),
-                                  ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                viewModel.attachmentName!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF191C1D),
                                 ),
-                                const Text(
-                                  '2.4 MB',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF777587),
-                                  ),
-                                ),
-                              ],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                            GestureDetector(
+                              onTap: () => viewModel.updateAttachment(null),
+                              child: const Icon(Icons.close, color: Color(0xFF777587), size: 20),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () => _pickFile(viewModel),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFC7C4D8).withValues(alpha: 0.3)),
                           ),
-                          const Icon(Icons.file_download_outlined, color: Color(0xFF777587), size: 20),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.close, color: Color(0xFF777587), size: 20),
-                        ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.attach_file, color: Color(0xFF3F37C9)),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Tap to attach a file...',
+                                style: TextStyle(
+                                  color: const Color(0xFF777587).withValues(alpha: 0.5),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -529,6 +611,138 @@ class _EditTaskContentState extends State<_EditTaskContent> {
       ),
     );
   }
+
+  String _fileExtension(String filename) {
+    final parts = filename.split('.');
+    return parts.length > 1 ? parts.last : 'FILE';
+  }
+
+  Future<void> _pickFile(EditTaskViewModel viewModel) async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+    );
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      viewModel.updateAttachment(file.name, filePath: file.path);
+    }
+  }
+
+  Future<void> _pickDeadline(BuildContext context, EditTaskViewModel viewModel) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3F37C9),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF191C1D),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (date != null && context.mounted) {
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: Color(0xFF3F37C9),
+                onPrimary: Colors.white,
+                onSurface: Color(0xFF191C1D),
+              ),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      DateTime actualDateTime;
+      if (time != null) {
+        actualDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      } else {
+        actualDateTime = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      }
+
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var formattedDate = '${months[date.month - 1]} ${date.day}, ${date.year}';
+
+      if (time != null) {
+        final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+        final minute = time.minute.toString().padLeft(2, '0');
+        final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+        formattedDate += ' $hour:$minute $period';
+      }
+
+      viewModel.updateCustomDeadline(formattedDate, actualDateTime);
+    }
+  }
+
+  // TODO: Sprint 2 — Status picker (uncomment when ready)
+  // void _showStatusPicker(BuildContext context, EditTaskViewModel viewModel) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  //     ),
+  //     backgroundColor: Colors.white,
+  //     builder: (ctx) => SafeArea(
+  //       child: Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 24),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Text(
+  //               'Change Status',
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF191C1D)),
+  //             ),
+  //             const SizedBox(height: 24),
+  //             ListTile(
+  //               leading: Container(
+  //                 width: 24,
+  //                 height: 24,
+  //                 decoration: BoxDecoration(
+  //                   shape: BoxShape.circle,
+  //                   border: Border.all(color: const Color(0xFFC7C4D8), width: 2),
+  //                 ),
+  //               ),
+  //               title: const Text('To Do', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+  //               subtitle: const Text('Keep working on this task'),
+  //               onTap: () => Navigator.pop(ctx),
+  //             ),
+  //             ListTile(
+  //               leading: Container(
+  //                 width: 24,
+  //                 height: 24,
+  //                 decoration: const BoxDecoration(
+  //                   shape: BoxShape.circle,
+  //                   color: Color(0xFF1E6C45),
+  //                 ),
+  //                 child: const Icon(Icons.check, color: Colors.white, size: 16),
+  //               ),
+  //               title: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF1E6C45))),
+  //               subtitle: const Text('Complete and move to history'),
+  //               onTap: () {
+  //                 Navigator.pop(ctx);
+  //                 _onMarkDone(context, viewModel);
+  //               },
+  //             ),
+  //             const SizedBox(height: 16),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildScaleSection(String title, String subtitle, int currentValue, Function(int) onChanged) {
     const activeColor = Color(0xFF3F37C9);

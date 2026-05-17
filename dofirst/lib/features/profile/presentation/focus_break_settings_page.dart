@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'settings_view_model.dart';
+import '../../../shared/services/focus_notification_service.dart';
 
 class FocusBreakSettingsPage extends StatefulWidget {
   const FocusBreakSettingsPage({super.key});
@@ -8,262 +11,275 @@ class FocusBreakSettingsPage extends StatefulWidget {
 }
 
 class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
-  int focusDuration = 25;
-  int shortBreak = 5;
-  int longBreak = 15;
-  int sessionsBeforeLongBreak = 4;
-  
-  bool vibration = true;
-  bool autoStartNextSession = true;
-  bool autoStartBreak = false;
-  String sound = 'Chime';
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF777587)),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        title: const Text(
-          'Focus & Break Settings',
-          style: TextStyle(
-            color: Color(0xFF191C1D),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Custumize your focus sessions and break\nto match your workflow',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF9E9E9E),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // DURATION SECTION
-                    const Text(
-                      'DURATION',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF191C1D),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildPickerTile(
-                            icon: Icons.timer_outlined,
-                            iconBg: const Color(0xFFF3E5F5), // Light purple
-                            iconColor: const Color(0xFF3525CD), // Purple
-                            title: 'Focus Duration',
-                            subtitle: 'How long you want to focus',
-                            value: '$focusDuration',
-                            unit: 'min',
-                            onTap: () => _showDurationPicker(
-                              title: 'Focus Duration',
-                              currentValue: focusDuration,
-                              options: [15, 20, 25, 30, 45, 60],
-                              onSelected: (val) => setState(() => focusDuration = val),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildPickerTile(
-                            icon: Icons.free_breakfast_outlined,
-                            iconBg: const Color(0xFFE8F5E9), // Light green
-                            iconColor: const Color(0xFF1B5E20), // Green
-                            title: 'Short Break',
-                            subtitle: 'Take a short break',
-                            value: '$shortBreak',
-                            unit: 'min',
-                            onTap: () => _showDurationPicker(
-                              title: 'Short Break',
-                              currentValue: shortBreak,
-                              options: [5, 10, 15, 20],
-                              onSelected: (val) => setState(() => shortBreak = val),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildPickerTile(
-                            icon: Icons.coffee_outlined,
-                            iconBg: const Color(0xFFFFF3E0), // Light orange
-                            iconColor: const Color(0xFFE65100), // Orange
-                            title: 'Weekly Team Sync', // Match exactly with screenshot text
-                            subtitle: 'Take a longer break',
-                            value: '$longBreak',
-                            unit: 'min',
-                            onTap: () => _showDurationPicker(
-                              title: 'Weekly Team Sync',
-                              currentValue: longBreak,
-                              options: [15, 20, 25, 30, 45, 60],
-                              onSelected: (val) => setState(() => longBreak = val),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+    return ChangeNotifierProvider(
+      create: (_) => SettingsViewModel(),
+      child: Consumer<SettingsViewModel>(
+        builder: (context, vm, _) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F9FA),
+            appBar: AppBar(
+              backgroundColor: const Color(0xFFF8F9FA),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Color(0xFF777587)),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+              title: const Text(
+                'Focus & Break Settings',
+                style: TextStyle(
+                  color: Color(0xFF191C1D),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: false,
+            ),
+            body: SafeArea(
+              child: vm.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Customize your focus sessions and break\nto match your workflow',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF9E9E9E),
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                
+                                // DURATION SECTION
+                                const Text(
+                                  'DURATION',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF191C1D),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      _buildPickerTile(
+                                        icon: Icons.timer_outlined,
+                                        iconBg: const Color(0xFFF3E5F5),
+                                        iconColor: const Color(0xFF3525CD),
+                                        title: 'Focus Duration',
+                                        subtitle: 'How long you want to focus',
+                                        value: '${vm.focusDuration}',
+                                        unit: 'min',
+                                        onTap: () => _showDurationPicker(
+                                          title: 'Focus Duration',
+                                          currentValue: vm.focusDuration,
+                                          options: [1, 20, 25, 30, 45, 60],
+                                          onSelected: (val) => vm.updateFocusDuration(val),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildPickerTile(
+                                        icon: Icons.free_breakfast_outlined,
+                                        iconBg: const Color(0xFFE8F5E9),
+                                        iconColor: const Color(0xFF1B5E20),
+                                        title: 'Short Break',
+                                        subtitle: 'Take a short break',
+                                        value: '${vm.shortBreak}',
+                                        unit: 'min',
+                                        onTap: () => _showDurationPicker(
+                                          title: 'Short Break',
+                                          currentValue: vm.shortBreak,
+                                          options: [1, 10, 15, 20],
+                                          onSelected: (val) => vm.updateShortBreak(val),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildPickerTile(
+                                        icon: Icons.coffee_outlined,
+                                        iconBg: const Color(0xFFFFF3E0),
+                                        iconColor: const Color(0xFFE65100),
+                                        title: 'Long Break',
+                                        subtitle: 'Take a longer break',
+                                        value: '${vm.longBreak}',
+                                        unit: 'min',
+                                        onTap: () => _showDurationPicker(
+                                          title: 'Long Break',
+                                          currentValue: vm.longBreak,
+                                          options: [1, 20, 25, 30, 45, 60],
+                                          onSelected: (val) => vm.updateLongBreak(val),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
 
-                    // SESSION SECTION
-                    const Text(
-                      'SESSION',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF191C1D),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: _buildPickerTile(
-                        icon: Icons.autorenew,
-                        iconBg: const Color(0xFFE8EAF6), // Light purple background
-                        iconColor: const Color(0xFF3525CD), // Purple icon
-                        title: 'Session Before Long Break',
-                        subtitle: 'Number of focus sessions',
-                        value: '$sessionsBeforeLongBreak',
-                        unit: 'sessions',
-                        onTap: () => _showDurationPicker(
-                          title: 'Sessions Before Long Break',
-                          currentValue: sessionsBeforeLongBreak,
-                          options: [2, 3, 4, 5, 6, 8],
-                          onSelected: (val) => setState(() => sessionsBeforeLongBreak = val),
+                                // SESSION SECTION
+                                const Text(
+                                  'SESSION',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF191C1D),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: _buildPickerTile(
+                                    icon: Icons.autorenew,
+                                    iconBg: const Color(0xFFE8EAF6),
+                                    iconColor: const Color(0xFF3525CD),
+                                    title: 'Session Before Long Break',
+                                    subtitle: 'Number of focus sessions',
+                                    value: '${vm.sessionsBeforeLongBreak}',
+                                    unit: 'sessions',
+                                    onTap: () => _showDurationPicker(
+                                      title: 'Sessions Before Long Break',
+                                      currentValue: vm.sessionsBeforeLongBreak,
+                                      options: [2, 3, 4, 5, 6, 8],
+                                      onSelected: (val) => vm.updateSessionsBeforeLongBreak(val),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+
+                                // OPTIONS SECTION
+                                const Text(
+                                  'OPTIONS',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF191C1D),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      _buildNavigateTile(
+                                        icon: Icons.notifications_active_outlined,
+                                        iconBg: const Color(0xFFF3E5F5),
+                                        iconColor: const Color(0xFF3525CD),
+                                        title: 'Sound',
+                                        subtitle: 'Play sound when session ends',
+                                        trailingText: vm.sound,
+                                        onTap: () => _showSoundPicker(vm),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      _buildToggleTile(
+                                        icon: Icons.vibration,
+                                        iconBg: const Color(0xFFE3F2FD),
+                                        iconColor: const Color(0xFF3525CD),
+                                        title: 'Vibration',
+                                        subtitle: 'Vibrate when session ends',
+                                        value: vm.vibration,
+                                        onChanged: (val) => vm.updateVibration(val),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      _buildToggleTile(
+                                        icon: Icons.play_circle_outline,
+                                        iconBg: const Color(0xFFF3E5F5),
+                                        iconColor: const Color(0xFF3525CD),
+                                        title: 'Auto Start Next Session',
+                                        subtitle: 'Start next focus session automatically',
+                                        value: vm.autoStartNextSession,
+                                        onChanged: (val) => vm.updateAutoStartNextSession(val),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      _buildToggleTile(
+                                        icon: Icons.play_lesson_outlined,
+                                        iconBg: const Color(0xFFF3E5F5),
+                                        iconColor: const Color(0xFF3525CD),
+                                        title: 'Auto Start Break',
+                                        subtitle: 'Start break automatically',
+                                        value: vm.autoStartBreak,
+                                        onChanged: (val) => vm.updateAutoStartBreak(val),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        
+                        // Save Button
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: vm.isSaving
+                                  ? null
+                                  : () async {
+                                      final success = await vm.saveSettings();
+                                      if (success && context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Settings saved!')),
+                                        );
+                                        Navigator.pop(context, true); // Return true to indicate settings changed
+                                      } else if (!success && context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(vm.errorMessage ?? 'Failed to save')),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF3525CD),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              child: vm.isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Text(
+                                      'Save Changes',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 32),
-
-                    // OPTIONS SECTION
-                    const Text(
-                      'OPTIONS',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF191C1D),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildNavigateTile(
-                            icon: Icons.notifications_active_outlined,
-                            iconBg: const Color(0xFFF3E5F5), // Light purple
-                            iconColor: const Color(0xFF3525CD), // Purple
-                            title: 'Sound',
-                            subtitle: 'Play sound when session ends',
-                            trailingText: sound,
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 24),
-                          _buildToggleTile(
-                            icon: Icons.vibration,
-                            iconBg: const Color(0xFFE3F2FD), // Light blue
-                            iconColor: const Color(0xFF3525CD), // Blue-purple
-                            title: 'Vibration',
-                            subtitle: 'Vibrate when session ends',
-                            value: vibration,
-                            onChanged: (val) => setState(() => vibration = val),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildToggleTile(
-                            icon: Icons.play_circle_outline,
-                            iconBg: const Color(0xFFF3E5F5), // Light purple
-                            iconColor: const Color(0xFF3525CD), // Purple
-                            title: 'Auto Start Next Session',
-                            subtitle: 'Start next focus session automatically',
-                            value: autoStartNextSession,
-                            onChanged: (val) => setState(() => autoStartNextSession = val),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildToggleTile(
-                            icon: Icons.play_lesson_outlined, // close icon representation
-                            iconBg: const Color(0xFFF3E5F5), // Light purple
-                            iconColor: const Color(0xFF3525CD), // Purple
-                            title: 'Auto Start Break',
-                            subtitle: 'Start break automatically',
-                            value: autoStartBreak,
-                            onChanged: (val) => setState(() => autoStartBreak = val),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
-            
-            // Save Button
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Save action
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Settings Saved')),
-                    );
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3525CD), // Deep blue-purple button from screenshot
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -333,6 +349,93 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
         );
       },
     );
+  }
+
+  /// Bug 5: Sound picker bottom sheet with preview
+  void _showSoundPicker(SettingsViewModel vm) {
+    final sounds = ['Chime', 'Ding', 'Bell', 'Gong', 'Silent'];
+    final soundIcons = [
+      Icons.music_note,
+      Icons.notifications_active,
+      Icons.doorbell_outlined,
+      Icons.album,
+      Icons.volume_off,
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Sound',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF191C1D)),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Choose a sound for session transitions',
+                style: TextStyle(fontSize: 14, color: Color(0xFF9E9E9E)),
+              ),
+              const SizedBox(height: 20),
+              ...List.generate(sounds.length, (i) {
+                final isSelected = vm.sound == sounds[i];
+                return ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF3525CD).withValues(alpha: 0.1)
+                          : const Color(0xFFF3F4F5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      soundIcons[i],
+                      color: isSelected ? const Color(0xFF3525CD) : const Color(0xFF777587),
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    sounds[i],
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? const Color(0xFF3525CD) : const Color(0xFF191C1D),
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_circle, color: Color(0xFF3525CD), size: 24)
+                      : null,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  onTap: () {
+                    vm.updateSound(sounds[i]);
+                    // Preview sound
+                    _previewSound(sounds[i]);
+                    Navigator.pop(ctx);
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _previewSound(String soundName) {
+    // Use the singleton notification service to preview the sound
+    try {
+      FocusNotificationService().playSound(soundName.toLowerCase());
+    } catch (_) {
+      // Ignore preview errors
+    }
   }
 
   Widget _buildPickerTile({

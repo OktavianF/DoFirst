@@ -105,7 +105,7 @@ export class PushNotificationService {
         isCompleted: false,
       },
       include: {
-        profile: true,
+        user: true,
       },
     });
 

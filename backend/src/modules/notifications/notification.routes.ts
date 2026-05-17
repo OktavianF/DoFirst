@@ -7,6 +7,16 @@ const router = Router();
 const controller = new NotificationController();
 const pushService = new PushNotificationService();
 
+// Cron endpoint — can be called by Edge Function or external cron
+router.post('/check-deadlines', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await pushService.checkDeadlines();
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.use(authMiddleware);
 
 router.get('/', controller.list);
@@ -38,14 +48,6 @@ router.post('/register-token', async (req: Request, res: Response, next: NextFun
   }
 });
 
-// Cron endpoint — can be called by Edge Function or external cron
-router.post('/check-deadlines', async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await pushService.checkDeadlines();
-    res.json({ success: true, data: result });
-  } catch (err) {
-    next(err);
-  }
-});
+
 
 export { router as notificationRoutes };

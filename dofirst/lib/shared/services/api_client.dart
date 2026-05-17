@@ -26,6 +26,13 @@ class ApiClient {
     return prefs.getString('access_token');
   }
 
+  /// Public token accessor for multipart uploads
+  static Future<String?> getToken() => _getToken();
+
+  /// Decode a JSON string into a Map
+  static Map<String, dynamic> decodeJson(String source) =>
+      jsonDecode(source) as Map<String, dynamic>;
+
   static Future<String?> _getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('refresh_token');
@@ -240,8 +247,8 @@ class ApiClient {
         // Retry also failed — redirect to login
         _handleUnauthorized();
         throw ApiException(
+          retryBody['error']?.toString() ?? 'Session expired',
           statusCode: retryResponse.statusCode,
-          message: retryBody['error']?.toString() ?? 'Session expired',
         );
       } else {
         // Refresh failed — redirect to login
@@ -250,8 +257,8 @@ class ApiClient {
     }
 
     throw ApiException(
+      responseBody['error']?.toString() ?? 'Unknown error',
       statusCode: response.statusCode,
-      message: responseBody['error']?.toString() ?? 'Unknown error',
     );
   }
 
@@ -266,7 +273,7 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
 
-  ApiException({required this.statusCode, required this.message});
+  ApiException(this.message, {this.statusCode = 0});
 
   @override
   String toString() => 'ApiException($statusCode): $message';

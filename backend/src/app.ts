@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { errorHandler } from './middleware/errorHandler';
 import { authRoutes } from './modules/auth/auth.routes';
+import { webAuthRoutes } from './modules/auth/web-auth.routes';
 import { taskRoutes } from './modules/tasks/task.routes';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { profileRoutes } from './modules/profile/profile.routes';
@@ -17,7 +18,7 @@ const app = express();
 // ---------------------------------------------------------------------------
 // Global Middleware
 // ---------------------------------------------------------------------------
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 
@@ -29,8 +30,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// API Routes
+// Web & API Routes
 // ---------------------------------------------------------------------------
+app.use('/auth', webAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);

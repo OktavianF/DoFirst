@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../shared/theme/app_theme.dart';
 import '../../../shared/repositories/auth_repository.dart';
@@ -73,6 +75,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  Future<void> _pickAvatar() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final filePath = result.files.first.path;
+    if (filePath == null) return;
+
+    setState(() => _isSaving = true);
+    try {
+      await _authRepo.uploadAvatar(File(filePath));
+      if (!mounted) return;
+
+      context.read<ProfileViewModel>().loadProfile();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile photo updated!')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload photo')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ProfileViewModel>();
@@ -105,9 +138,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Stack(
-                      children: [
-                        Container(
+                    GestureDetector(
+                      onTap: _pickAvatar,
+                      child: Stack(
+                        children: [
+                          Container(
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
@@ -156,7 +191,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             ),
                           ),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Text(

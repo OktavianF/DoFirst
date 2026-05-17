@@ -1,13 +1,17 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../../../shared/repositories/task_repository.dart';
 import '../../../../shared/services/api_client.dart';
 
 class EditTaskViewModel extends ChangeNotifier {
-  final TaskRepository _taskRepo = TaskRepository();
+  final TaskRepository taskRepo = TaskRepository();
 
   String _title = '';
   String _description = '';
   String? _attachmentName;
+  String? _attachmentPath;
+  String? _existingFileUrl;
+  bool _attachmentRemoved = false;
   int _importance = 3;
   int _difficulty = 3;
   int _urgency = 3;
@@ -21,6 +25,7 @@ class EditTaskViewModel extends ChangeNotifier {
   String get title => _title;
   String get description => _description;
   String? get attachmentName => _attachmentName;
+  String? get existingFileUrl => _existingFileUrl;
   int get importance => _importance;
   int get difficulty => _difficulty;
   int get urgency => _urgency;
@@ -40,8 +45,13 @@ class EditTaskViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateAttachment(String? fileName) {
+  void updateAttachment(String? fileName, {String? filePath}) {
     _attachmentName = fileName;
+    _attachmentPath = filePath;
+    if (fileName == null) {
+      _attachmentRemoved = true;
+      _existingFileUrl = null;
+    }
     notifyListeners();
   }
 
@@ -121,6 +131,7 @@ class EditTaskViewModel extends ChangeNotifier {
 
     // Load file attachment
     if (task.fileUrl != null) {
+      _existingFileUrl = task.fileUrl;
       final uri = Uri.tryParse(task.fileUrl);
       _attachmentName = uri?.pathSegments.last ?? 'Attachment';
     }
@@ -136,14 +147,31 @@ class EditTaskViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _taskRepo.updateTask(_taskId!, {
+      final payload = {
         'title': _title,
         'description': _description.isEmpty ? null : _description,
         'importance': _importance,
         'difficulty': _difficulty,
         'urgency': _urgency,
         'deadline': _resolveDeadlineToISO(),
-      });
+      };
+      
+      // If user explicitly removed the attachment, clear it
+      if (_attachmentRemoved && _attachmentPath == null) {
+        payload['fileUrl'] = null;
+      }
+      
+      await taskRepo.updateTask(_taskId!, payload);
+
+      // Upload attachment if a new file was picked
+      if (_attachmentPath != null) {
+        try {
+          await taskRepo.uploadTaskAttachment(_taskId!, File(_attachmentPath!));
+        } catch (e) {
+          debugPrint('Attachment upload failed: $e');
+        }
+      }
+
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

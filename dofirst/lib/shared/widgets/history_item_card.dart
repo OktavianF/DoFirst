@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HistoryItemCard extends StatelessWidget {
   final String title;
@@ -46,19 +47,17 @@ class HistoryItemCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
+                    style: GoogleFonts.lexend(
                       fontSize: 16,
-                      color: Color(0xFF191C1D),
+                      color: const Color(0xFF191C1D),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
+                    style: GoogleFonts.lexend(
                       fontSize: 14,
-                      color: Color(0xFFA0A0A0),
+                      color: const Color(0xFFA0A0A0),
                     ),
                   ),
                 ],

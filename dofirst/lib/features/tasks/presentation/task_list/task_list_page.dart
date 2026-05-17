@@ -12,6 +12,7 @@ import '../../../notifications/presentation/notifications_page.dart';
 import '../task_input/task_input_page.dart';
 import 'task_list_view_model.dart';
 import '../task_detail/task_detail_page.dart';
+import '../../../dashboard/presentation/dashboard_page.dart';
 
 class TaskListPage extends StatelessWidget {
   const TaskListPage({super.key});
@@ -115,11 +116,12 @@ class _TaskListPageContentState extends State<_TaskListPageContent> {
   }
 
   void _onBottomNavTap(BuildContext context, int index) {
+    if (index == 1) return; // Already on Tasks
     if (index == 0) {
       pushReplacementNoTransition(context, const HomePage());
-      return;
-    }
-    if (index == 2) {
+    } else if (index == 2) {
+      pushReplacementNoTransition(context, const DashboardPage());
+    } else if (index == 3) {
       pushReplacementNoTransition(context, const ProfilePage());
     }
   }

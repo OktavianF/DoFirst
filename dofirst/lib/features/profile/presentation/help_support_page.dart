@@ -1,7 +1,49 @@
 import 'package:flutter/material.dart';
 
-class HelpSupportPage extends StatelessWidget {
+class HelpSupportPage extends StatefulWidget {
   const HelpSupportPage({super.key});
+
+  @override
+  State<HelpSupportPage> createState() => _HelpSupportPageState();
+}
+
+class _HelpSupportPageState extends State<HelpSupportPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  static const List<Map<String, String>> _allFaqs = [
+    {
+      'title': 'How do I reset my password?',
+      'answer': 'Go to the Login page and tap "Forgot Password". Enter your registered email address and tap "Send Reset Link". You will receive an email with a link to create a new password. Please also check your spam folder if you don\'t see it in your inbox.',
+    },
+    {
+      'title': 'How do I delete a task?',
+      'answer': 'Open the task by tapping on it from your task list. On the Task Detail page, you will see a "Delete Task" button at the bottom. Tap it and confirm the deletion. Please note that this action cannot be undone.',
+    },
+    {
+      'title': 'Can I sync across devices?',
+      'answer': 'Yes! All your data is securely stored in the cloud and synced automatically. Simply log in with the same account (email or Google) on another device and all your tasks, focus sessions, and history will be available.',
+    },
+    {
+      'title': 'How to enable push notifications?',
+      'answer': 'Go to Profile > Notifications, then toggle "Enable Notifications" on. Make sure you also allow notifications in your device\'s system settings for the DoFirst app. You will receive reminders for upcoming deadlines and focus session alerts.',
+    },
+  ];
+
+  List<Map<String, String>> get _filteredFaqs {
+    if (_searchQuery.isEmpty) return _allFaqs;
+    final query = _searchQuery.toLowerCase();
+    return _allFaqs.where((faq) {
+      return faq['title']!.toLowerCase().contains(query) ||
+          faq['answer']!.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +100,21 @@ class HelpSupportPage extends StatelessWidget {
                   ],
                 ),
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
                     hintText: 'Search for articles...',
                     hintStyle: const TextStyle(color: Color(0xFFBDBDBD)),
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF777587)),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Color(0xFF777587), size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
@@ -81,24 +134,43 @@ class HelpSupportPage extends StatelessWidget {
               const SizedBox(height: 16),
               
               // FAQ Items
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+              if (_filteredFaqs.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Text(
+                    'No results found.\nTry a different keyword.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF777587),
+                      height: 1.5,
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    children: _filteredFaqs.asMap().entries.map((entry) {
+                      final isLast = entry.key == _filteredFaqs.length - 1;
+                      return Column(
+                        children: [
+                          _buildFaqItem(entry.value['title']!, entry.value['answer']!),
+                          if (!isLast) const Divider(height: 1, color: Color(0x1AC7C4D8)),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    _buildFaqItem('How do I reset my password?'),
-                    const Divider(height: 1, color: Color(0x1AC7C4D8)),
-                    _buildFaqItem('How do I delete a task?'),
-                    const Divider(height: 1, color: Color(0x1AC7C4D8)),
-                    _buildFaqItem('Can I sync across devices?'),
-                    const Divider(height: 1, color: Color(0x1AC7C4D8)),
-                    _buildFaqItem('How to enable push notifications?'),
-                  ],
-                ),
-              ),
               const SizedBox(height: 32),
 
               // Contact Support
@@ -122,8 +194,8 @@ class HelpSupportPage extends StatelessWidget {
                   children: [
                     _buildContactItem(
                       icon: Icons.chat_bubble_outline,
-                      title: 'Live Chat',
-                      subtitle: 'Start a conversation now',
+                      title: 'Chat Now',
+                      subtitle: '+62 8136 7642 730',
                     ),
                     const SizedBox(height: 24),
                     _buildContactItem(
@@ -141,18 +213,33 @@ class HelpSupportPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(String title) {
-    return ListTile(
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF191C1D),
+  Widget _buildFaqItem(String title, String answer) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF191C1D),
+          ),
         ),
+        iconColor: const Color(0xFF777587),
+        collapsedIconColor: const Color(0xFF777587),
+        children: [
+          Text(
+            answer,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF777587),
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
-      trailing: const Icon(Icons.chevron_right, color: Color(0xFF777587)),
-      onTap: () {},
     );
   }
 
@@ -162,11 +249,11 @@ class HelpSupportPage extends StatelessWidget {
         Container(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3E5F5), // Light purple
+          decoration: const BoxDecoration(
+            color: Color(0xFFF3E5F5),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: const Color(0xFF4A148C)), // Purple
+          child: Icon(icon, color: const Color(0xFF4A148C)),
         ),
         const SizedBox(width: 16),
         Column(

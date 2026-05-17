@@ -42,6 +42,11 @@ class _HomePageContentState extends State<_HomePageContent> {
         context.read<HomeViewModel>().refreshCountdowns();
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<HomeViewModel>().loadDashboard();
+      }
+    });
   }
 
   @override
@@ -341,46 +346,63 @@ fontWeight: FontWeight.bold,
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3525CD), Color(0xFF4F46E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: viewModel.hasHeroTask
+                      ? const LinearGradient(
+                          colors: [Color(0xFF3525CD), Color(0xFF4F46E5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [Colors.grey[300]!, Colors.grey[400]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                   borderRadius: BorderRadius.circular(24.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3525CD).withValues(alpha: 0.2),
-                      offset: const Offset(0, 20),
-                      blurRadius: 25.0,
-                      spreadRadius: -5.0,
-                    ),
-                  ],
+                  boxShadow: viewModel.hasHeroTask
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF3525CD).withValues(alpha: 0.2),
+                            offset: const Offset(0, 20),
+                            blurRadius: 25.0,
+                            spreadRadius: -5.0,
+                          ),
+                        ]
+                      : [],
                 ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     key: const Key('start_now_button'),
                     borderRadius: BorderRadius.circular(24.0),
-                    onTap: () =>
-                        _openFocusSession(context, viewModel.heroTaskTitle, viewModel.heroTaskId),
+                    onTap: viewModel.hasHeroTask
+                        ? () => _openFocusSession(
+                              context,
+                              viewModel.heroTaskTitle,
+                              viewModel.heroTaskId,
+                            )
+                        : null,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Start Now',
                             style: TextStyle(
-fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                               fontSize: 18.0,
-                              color: Colors.white,
+                              color: viewModel.hasHeroTask
+                                  ? Colors.white
+                                  : Colors.grey[600],
                             ),
                           ),
                           const SizedBox(width: 8.0),
-                          const Icon(
+                          Icon(
                             Icons.arrow_forward_ios,
                             size: 16,
-                            color: Colors.white,
+                            color: viewModel.hasHeroTask
+                                ? Colors.white
+                                : Colors.grey[600],
                           ),
                         ],
                       ),

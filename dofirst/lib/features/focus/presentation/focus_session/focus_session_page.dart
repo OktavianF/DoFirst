@@ -31,6 +31,24 @@ class _FocusSessionContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.watch<FocusSessionViewModel>();
 
+    if (!viewModel.settingsLoaded) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -102,7 +120,7 @@ class _FocusSessionContent extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Focus: 25m',
+                                'Focus: ${viewModel.focusMinutes}m',
                                 style: TextStyle(
                                   color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
                                   fontSize: 12,
@@ -132,7 +150,7 @@ class _FocusSessionContent extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Break: 5m',
+                                'Break: ${viewModel.breakMinutes}m',
                                 style: TextStyle(
                                   color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
                                   fontSize: 12,

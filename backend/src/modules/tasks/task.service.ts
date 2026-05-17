@@ -1,5 +1,6 @@
 import { TaskRepository } from './task.repository';
 import { AppError } from '../../lib/AppError';
+import { UploadService } from '../upload/upload.service';
 
 const taskRepository = new TaskRepository();
 
@@ -226,7 +227,16 @@ export class TaskService {
     if (data.title !== undefined) updateData.title = data.title.trim();
     if (data.description !== undefined) updateData.description = data.description?.trim() || null;
     if (data.tags !== undefined) updateData.tags = data.tags;
-    if (data.fileUrl !== undefined) updateData.fileUrl = data.fileUrl;
+    
+    if (data.fileUrl !== undefined) {
+      updateData.fileUrl = data.fileUrl;
+      // If client explicitly cleared the attachment, delete the old file from Supabase
+      if (data.fileUrl === null && existing.fileUrl) {
+        console.log(`[Storage Clean] User cleared attachment for task ${taskId}. Deleting from storage...`);
+        const uploadService = new UploadService();
+        await uploadService.deleteFileByUrl('task-attachments', existing.fileUrl);
+      }
+    }
 
     return taskRepository.updateAndReturn(taskId, userId, updateData);
   }
@@ -238,6 +248,13 @@ export class TaskService {
     const task = await taskRepository.findById(taskId, userId);
     if (!task) {
       throw AppError.notFound('Task not found');
+    }
+
+    // Clean up attachment from storage if it exists
+    if (task.fileUrl) {
+      console.log(`[Storage Clean] Task ${taskId} is being deleted. Deleting attachment from storage...`);
+      const uploadService = new UploadService();
+      await uploadService.deleteFileByUrl('task-attachments', task.fileUrl);
     }
 
     await taskRepository.delete(taskId, userId);

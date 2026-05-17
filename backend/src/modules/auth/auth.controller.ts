@@ -137,4 +137,28 @@ export class AuthController {
       next(err);
     }
   }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { password, accessToken } = req.body;
+
+      if (!password || !accessToken) {
+        res.status(400).json({
+          success: false,
+          error: 'Password and accessToken are required',
+        });
+        return;
+      }
+
+      const result = await authService.resetPassword(password, accessToken);
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
+

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../../lib/supabase';
+import { supabaseAdmin, createSupabaseClient } from '../../lib/supabase';
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../lib/AppError';
 
@@ -183,4 +183,19 @@ export class AuthService {
       } : null,
     };
   }
+
+  /**
+   * Reset a user's password using the access token they obtained via password recovery redirect.
+   */
+  async resetPassword(password: string, accessToken: string) {
+    const client = createSupabaseClient(accessToken);
+    const { error } = await client.auth.updateUser({ password });
+
+    if (error) {
+      throw AppError.badRequest(error.message);
+    }
+
+    return { success: true, message: 'Password updated successfully' };
+  }
 }
+

@@ -51,31 +51,56 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   DashboardViewModel() {
-    loadDashboard();
+    _loadFromCache().then((_) => loadDashboard());
+  }
+
+  /// Populate fields from dashboard data (used by both cache and API)
+  void _populateFromData(Map<String, dynamic> data) {
+    _userName = data['userName'] as String? ?? 'User';
+    _totalTasks = data['totalTasks'] as int? ?? 0;
+    _completedTasksCount = data['completedTasksCount'] as int? ?? 0;
+    _highPriorityCount = data['highPriorityCount'] as int? ?? 0;
+    _averageFocusMinutes = data['averageFocusMinutes'] as int? ?? 0;
+    _totalFocusMinutes = data['totalFocusMinutes'] as int? ?? 0;
+    _unreadNotifications = data['unreadNotifications'] as int? ?? 0;
+    _heroTask = data['heroTask'] as Map<String, dynamic>?;
+
+    final upcoming = data['upcomingTasks'] as List<dynamic>? ?? [];
+    _upcomingTasks = upcoming.cast<Map<String, dynamic>>();
+
+    final history = data['recentHistory'] as List<dynamic>? ?? [];
+    _recentHistory = history.cast<Map<String, dynamic>>();
+  }
+
+  /// Load cached dashboard data for instant display (no loading spinner)
+  Future<void> _loadFromCache() async {
+    try {
+      final cached = await ApiClient.getCachedData('cached_dashboard_stats');
+      if (cached == null) return;
+
+      final data = cached as Map<String, dynamic>;
+      _populateFromData(data);
+      _isLoading = false;
+      notifyListeners();
+    } catch (_) {
+      // Cache miss or corrupt — silently continue to fetch from API
+    }
   }
 
   Future<void> loadDashboard() async {
-    _isLoading = true;
+    // Only show loading indicator if we have no cached data
+    if (_completedTasksCount == 0 && _totalTasks == 0 && _recentHistory.isEmpty) {
+      _isLoading = true;
+    }
     _errorMessage = null;
     notifyListeners();
 
     try {
       final data = await _taskRepo.getDashboard();
+      _populateFromData(data);
 
-      _userName = data['userName'] as String? ?? 'User';
-      _totalTasks = data['totalTasks'] as int? ?? 0;
-      _completedTasksCount = data['completedTasksCount'] as int? ?? 0;
-      _highPriorityCount = data['highPriorityCount'] as int? ?? 0;
-      _averageFocusMinutes = data['averageFocusMinutes'] as int? ?? 0;
-      _totalFocusMinutes = data['totalFocusMinutes'] as int? ?? 0;
-      _unreadNotifications = data['unreadNotifications'] as int? ?? 0;
-      _heroTask = data['heroTask'] as Map<String, dynamic>?;
-
-      final upcoming = data['upcomingTasks'] as List<dynamic>? ?? [];
-      _upcomingTasks = upcoming.cast<Map<String, dynamic>>();
-
-      final history = data['recentHistory'] as List<dynamic>? ?? [];
-      _recentHistory = history.cast<Map<String, dynamic>>();
+      // Cache the response for instant loading next time
+      await ApiClient.cacheData('cached_dashboard_stats', data);
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
