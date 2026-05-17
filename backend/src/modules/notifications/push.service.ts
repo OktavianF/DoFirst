@@ -103,6 +103,7 @@ export class PushNotificationService {
           lte: threeHoursFromNow,
         },
         isCompleted: false,
+        lastNotifiedAt: null, // Avoid duplicate spamming
       },
       include: {
         user: true,
@@ -130,6 +131,12 @@ export class PushNotificationService {
         body,
         type: 'deadline',
         taskId: task.id,
+      });
+
+      // Update lastNotifiedAt to mark as notified
+      await prisma.task.update({
+        where: { id: task.id },
+        data: { lastNotifiedAt: now },
       });
     }
 
