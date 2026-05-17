@@ -81,6 +81,20 @@ class FocusNotificationService {
     required String title,
     required String body,
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final enableNotifications = prefs.getBool('enable_notifications') ?? true;
+    if (!enableNotifications) return;
+
+    // Check specific toggle triggers
+    final titleLower = title.toLowerCase();
+    if (titleLower.contains('focus') || titleLower.contains('fokus')) {
+      final focusAlerts = prefs.getBool('focus_session_alerts') ?? true;
+      if (!focusAlerts) return;
+    } else if (titleLower.contains('break') || titleLower.contains('istirahat') || titleLower.contains('break time')) {
+      final breakAlerts = prefs.getBool('break_reminders') ?? true;
+      if (!breakAlerts) return;
+    }
+
     if (!_initialized) await init();
 
     // Show notification popup

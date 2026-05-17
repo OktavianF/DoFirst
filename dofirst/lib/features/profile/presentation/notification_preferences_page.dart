@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationPreferencesPage extends StatefulWidget {
   const NotificationPreferencesPage({super.key});
@@ -8,11 +9,37 @@ class NotificationPreferencesPage extends StatefulWidget {
 }
 
 class _NotificationPreferencesPageState extends State<NotificationPreferencesPage> {
-  bool enableNotifications = false;
-  bool taskReminders = false;
-  bool focusSessionAlerts = false;
-  bool breakReminders = false;
-  bool streakUpdates = false;
+  bool enableNotifications = true;
+  bool taskReminders = true;
+  bool focusSessionAlerts = true;
+  bool breakReminders = true;
+  bool streakUpdates = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      enableNotifications = prefs.getBool('enable_notifications') ?? true;
+      taskReminders = prefs.getBool('task_reminders') ?? true;
+      focusSessionAlerts = prefs.getBool('focus_session_alerts') ?? true;
+      breakReminders = prefs.getBool('break_reminders') ?? true;
+      streakUpdates = prefs.getBool('streak_updates') ?? true;
+    });
+  }
+
+  Future<void> _savePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('enable_notifications', enableNotifications);
+    await prefs.setBool('task_reminders', taskReminders);
+    await prefs.setBool('focus_session_alerts', focusSessionAlerts);
+    await prefs.setBool('break_reminders', breakReminders);
+    await prefs.setBool('streak_updates', streakUpdates);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -194,8 +221,8 @@ class _NotificationPreferencesPageState extends State<NotificationPreferencesPag
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Save action
+                  onPressed: () async {
+                    await _savePreferences();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Preferences Saved')),
                     );
