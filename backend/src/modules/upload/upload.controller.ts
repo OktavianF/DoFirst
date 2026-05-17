@@ -8,7 +8,7 @@ export class UploadController {
   async uploadTaskAttachment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { user } = req as AuthenticatedRequest;
-      const taskId = req.params.taskId;
+      const taskId = req.params.taskId as string;
       const file = req.file;
 
       if (!file) {
