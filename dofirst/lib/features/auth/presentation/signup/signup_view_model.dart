@@ -76,7 +76,12 @@ class SignupViewModel extends ChangeNotifier {
     } catch (e, stacktrace) {
       print('Google sign in error: $e');
       print('Stacktrace: $stacktrace');
-      _errorMessage = 'Google sign-in failed: $e';
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('cancel') || errorStr.contains('12501')) {
+        _errorMessage = null; // Suppress error snackbar on user cancellation
+      } else {
+        _errorMessage = 'Google sign-in failed: $e';
+      }
       return false;
     } finally {
       _isSubmitting = false;

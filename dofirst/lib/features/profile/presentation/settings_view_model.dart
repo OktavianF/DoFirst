@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../shared/repositories/settings_repository.dart';
 import '../../../shared/services/api_client.dart';
+import '../../../shared/services/focus_notification_service.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   final SettingsRepository _settingsRepo = SettingsRepository();
@@ -49,7 +50,13 @@ class SettingsViewModel extends ChangeNotifier {
       _vibration = data['vibration'] as bool? ?? true;
       _autoStartNextSession = data['autoStartNextSession'] as bool? ?? data['auto_start_next_session'] as bool? ?? true;
       _autoStartBreak = data['autoStartBreak'] as bool? ?? data['auto_start_break'] as bool? ?? false;
-      _sound = data['sound'] as String? ?? 'Chime';
+      final loadedSound = data['sound'] as String? ?? 'Chime';
+      if (loadedSound.isNotEmpty) {
+        _sound = loadedSound[0].toUpperCase() + loadedSound.substring(1).toLowerCase();
+      } else {
+        _sound = 'Chime';
+      }
+      await FocusNotificationService().saveSoundPreference(_sound);
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
@@ -116,6 +123,7 @@ class SettingsViewModel extends ChangeNotifier {
         'autoStartBreak': _autoStartBreak,
         'sound': _sound,
       });
+      await FocusNotificationService().saveSoundPreference(_sound);
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;

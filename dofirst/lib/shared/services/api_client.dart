@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -16,8 +17,8 @@ class ApiClient {
   /// Session validity duration — 1 week
   static const Duration _sessionDuration = Duration(days: 7);
 
-  /// Whether a token refresh is already in progress (prevents concurrent refreshes)
-  static bool _isRefreshing = false;
+  /// The active token refresh future to share between concurrent requests (prevents concurrent refreshes race conditions)
+  static Future<bool>? _refreshFuture;
 
   static String get baseUrl => _baseUrl;
 
@@ -110,12 +111,20 @@ class ApiClient {
   /// Attempt to refresh the access token using the stored refresh token.
   /// Returns true if refresh was successful.
   static Future<bool> refreshAccessToken() async {
-    if (_isRefreshing) return false;
-    _isRefreshing = true;
+    if (_refreshFuture != null) {
+      return _refreshFuture!;
+    }
+
+    final completer = Completer<bool>();
+    _refreshFuture = completer.future;
 
     try {
       final refreshToken = await _getRefreshToken();
-      if (refreshToken == null || refreshToken.isEmpty) return false;
+      if (refreshToken == null || refreshToken.isEmpty) {
+        _refreshFuture = null;
+        completer.complete(false);
+        return false;
+      }
 
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/refresh'),
@@ -133,14 +142,18 @@ class ApiClient {
             accessToken: session['accessToken'] as String? ?? '',
             refreshToken: session['refreshToken'] as String? ?? '',
           );
+          _refreshFuture = null;
+          completer.complete(true);
           return true;
         }
       }
+      _refreshFuture = null;
+      completer.complete(false);
       return false;
     } catch (_) {
+      _refreshFuture = null;
+      completer.complete(false);
       return false;
-    } finally {
-      _isRefreshing = false;
     }
   }
 
@@ -223,6 +236,12 @@ class ApiClient {
 
         if (method == 'POST') {
           retryResponse = await http.post(
+            Uri.parse('$_baseUrl$path'),
+            headers: retryHeaders,
+            body: body != null ? jsonEncode(body) : null,
+          );
+        } else if (method == 'PUT') {
+          retryResponse = await http.put(
             Uri.parse('$_baseUrl$path'),
             headers: retryHeaders,
             body: body != null ? jsonEncode(body) : null,

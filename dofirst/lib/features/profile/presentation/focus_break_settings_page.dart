@@ -90,7 +90,7 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
                                         onTap: () => _showDurationPicker(
                                           title: 'Focus Duration',
                                           currentValue: vm.focusDuration,
-                                          options: [1, 20, 25, 30, 45, 60],
+                                          options: [15, 20, 25, 30, 45, 60],
                                           onSelected: (val) => vm.updateFocusDuration(val),
                                         ),
                                       ),
@@ -106,7 +106,7 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
                                         onTap: () => _showDurationPicker(
                                           title: 'Short Break',
                                           currentValue: vm.shortBreak,
-                                          options: [1, 10, 15, 20],
+                                          options: [5, 10, 15, 20, 25],
                                           onSelected: (val) => vm.updateShortBreak(val),
                                         ),
                                       ),
@@ -122,7 +122,7 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
                                         onTap: () => _showDurationPicker(
                                           title: 'Long Break',
                                           currentValue: vm.longBreak,
-                                          options: [1, 20, 25, 30, 45, 60],
+                                          options: [15, 20, 25, 30, 45, 60],
                                           onSelected: (val) => vm.updateLongBreak(val),
                                         ),
                                       ),
@@ -158,7 +158,7 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
                                     onTap: () => _showDurationPicker(
                                       title: 'Sessions Before Long Break',
                                       currentValue: vm.sessionsBeforeLongBreak,
-                                      options: [2, 3, 4, 5, 6, 8],
+                                      options: [2, 4, 6, 8, 10],
                                       onSelected: (val) => vm.updateSessionsBeforeLongBreak(val),
                                     ),
                                   ),
@@ -290,62 +290,247 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
     required List<int> options,
     required ValueChanged<int> onSelected,
   }) {
+    double minVal = 5;
+    double maxVal = 90;
+    String unitLabel = 'min';
+
+    if (title.toLowerCase().contains('session')) {
+      minVal = 1;
+      maxVal = 10;
+      unitLabel = 'sessions';
+    } else if (title.toLowerCase().contains('short')) {
+      minVal = 1;
+      maxVal = 30;
+      unitLabel = 'min';
+    } else if (title.toLowerCase().contains('long break')) {
+      minVal = 5;
+      maxVal = 60;
+      unitLabel = 'min';
+    }
+
+    int selectedValue = currentValue;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       backgroundColor: Colors.white,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Set $title',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF191C1D),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 24.0,
+                  right: 24.0,
+                  top: 12.0,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: options.map((option) {
-                    final isSelected = option == currentValue;
-                    return InkWell(
-                      onTap: () {
-                        onSelected(option);
-                        Navigator.pop(context);
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF3525CD) : const Color(0xFFF3F4F5),
-                          borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle
+                    Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Title
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Adjust $title',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF191C1D),
+                            fontFamily: 'Lexend',
+                          ),
                         ),
-                        child: Text(
-                          '$option',
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close_rounded, color: Color(0xFF777587)),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFF3F4F5),
+                            padding: const EdgeInsets.all(8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Display Card
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3525CD).withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: const Color(0xFF3525CD).withValues(alpha: 0.15),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '$selectedValue',
+                            style: const TextStyle(
+                              fontSize: 64,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF3525CD),
+                              fontFamily: 'Lexend',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            unitLabel,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF777587),
+                              fontFamily: 'Lexend',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Slider
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 6,
+                        activeTrackColor: const Color(0xFF3525CD),
+                        inactiveTrackColor: const Color(0xFFE8EAF6),
+                        thumbColor: const Color(0xFF3525CD),
+                        overlayColor: const Color(0xFF3525CD).withValues(alpha: 0.12),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 12,
+                          elevation: 4,
+                        ),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+                      ),
+                      child: Slider(
+                        value: selectedValue.toDouble().clamp(minVal, maxVal),
+                        min: minVal,
+                        max: maxVal,
+                        divisions: (maxVal - minVal).toInt(),
+                        onChanged: (val) {
+                          setSheetState(() {
+                            selectedValue = val.round();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Presets
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'QUICK PRESETS',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF777587),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        alignment: WrapAlignment.start,
+                        children: options.map((option) {
+                          final isSelected = option == selectedValue;
+                          return InkWell(
+                            onTap: () {
+                              setSheetState(() {
+                                selectedValue = option;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected ? const Color(0xFF3525CD) : const Color(0xFFF3F4F5),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected ? const Color(0xFF3525CD) : const Color(0xFFE0E0E0),
+                                  width: 1,
+                                ),
+                                boxShadow: isSelected ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF3525CD).withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ] : null,
+                              ),
+                              child: Text(
+                                '$option $unitLabel',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : const Color(0xFF191C1D),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Confirm Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          onSelected(selectedValue);
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 22),
+                        label: const Text(
+                          'Confirm Selection',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : const Color(0xFF191C1D),
+                            fontFamily: 'Lexend',
                           ),
                         ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3525CD),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          elevation: 2,
+                          shadowColor: const Color(0xFF3525CD).withValues(alpha: 0.4),
+                        ),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -385,7 +570,7 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
               ),
               const SizedBox(height: 20),
               ...List.generate(sounds.length, (i) {
-                final isSelected = vm.sound == sounds[i];
+                final isSelected = vm.sound.toLowerCase() == sounds[i].toLowerCase();
                 return ListTile(
                   leading: Container(
                     width: 40,

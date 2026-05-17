@@ -67,11 +67,12 @@ class FocusNotificationService {
     if (assetPath == null || assetPath.isEmpty) return;
 
     try {
+      print('DEBUG: playSound playing asset: $assetPath');
       await _audioPlayer.stop();
-      await _audioPlayer.setSource(AssetSource(assetPath));
-      await _audioPlayer.resume();
-    } catch (_) {
-      // Fallback: notification itself will still ring via system default
+      await _audioPlayer.play(AssetSource(assetPath));
+    } catch (e, stack) {
+      print('DEBUG: playSound failed with error: $e');
+      print(stack);
     }
   }
 
@@ -84,12 +85,12 @@ class FocusNotificationService {
 
     // Show notification popup
     const androidDetails = AndroidNotificationDetails(
-      'focus_session_channel',
-      'Focus Session',
-      channelDescription: 'Notifications for focus and break session transitions',
+      'focus_session_channel_silent',
+      'Focus Session Alerts',
+      channelDescription: 'Notifications for focus and break session transitions without default system beep',
       importance: Importance.high,
       priority: Priority.high,
-      playSound: true,
+      playSound: false,
       enableVibration: true,
     );
 

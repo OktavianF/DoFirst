@@ -76,6 +76,7 @@ class FocusSessionViewModel extends ChangeNotifier {
       _longBreakMinutes = data['longBreak'] as int? ?? data['long_break'] as int? ?? 15;
       _sessionsBeforeLongBreak = data['sessionsBeforeLongBreak'] as int? ?? data['sessions_before_long_break'] as int? ?? 4;
       _soundPreference = data['sound'] as String? ?? 'Chime';
+      await _notificationService.saveSoundPreference(_soundPreference);
 
       // Reset timer to new focus duration if not currently running
       if (!_isRunning) {
