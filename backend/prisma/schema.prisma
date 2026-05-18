@@ -103,6 +103,7 @@ model UserSettings {
   autoStartBreak          Boolean  @default(false) @map("auto_start_break")
   sound                   String   @default("Chime")
   fcmToken                String?  @map("fcm_token")
+  taskReminders           Boolean  @default(false) @map("task_reminders")
   updatedAt               DateTime @default(now()) @map("updated_at")
 
   user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)

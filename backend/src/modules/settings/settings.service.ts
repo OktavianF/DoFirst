@@ -31,6 +31,7 @@ export class SettingsService {
     autoStartBreak?: boolean;
     sound?: string;
     fcmToken?: string | null;
+    taskReminders?: boolean;
   }) {
     // Ensure settings record exists (upsert)
     return prisma.userSettings.upsert({

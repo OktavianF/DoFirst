@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../shared/repositories/settings_repository.dart';
 
 class NotificationPreferencesPage extends StatefulWidget {
   const NotificationPreferencesPage({super.key});
@@ -9,11 +10,11 @@ class NotificationPreferencesPage extends StatefulWidget {
 }
 
 class _NotificationPreferencesPageState extends State<NotificationPreferencesPage> {
-  bool enableNotifications = true;
-  bool taskReminders = true;
-  bool focusSessionAlerts = true;
-  bool breakReminders = true;
-  bool streakUpdates = true;
+  bool enableNotifications = false;
+  bool taskReminders = false;
+  bool focusSessionAlerts = false;
+  bool breakReminders = false;
+  bool streakUpdates = false;
 
   @override
   void initState() {
@@ -22,23 +23,48 @@ class _NotificationPreferencesPageState extends State<NotificationPreferencesPag
   }
 
   Future<void> _loadPreferences() async {
+    // 1. Load local SharedPreferences first (for instant display)
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      enableNotifications = prefs.getBool('enable_notifications') ?? true;
-      taskReminders = prefs.getBool('task_reminders') ?? true;
-      focusSessionAlerts = prefs.getBool('focus_session_alerts') ?? true;
-      breakReminders = prefs.getBool('break_reminders') ?? true;
-      streakUpdates = prefs.getBool('streak_updates') ?? true;
+      enableNotifications = prefs.getBool('enable_notifications') ?? false;
+      taskReminders = prefs.getBool('task_reminders') ?? false;
+      focusSessionAlerts = prefs.getBool('focus_session_alerts') ?? false;
+      breakReminders = prefs.getBool('break_reminders') ?? false;
+      streakUpdates = prefs.getBool('streak_updates') ?? false;
     });
+
+    // 2. Load from database in background to sync
+    try {
+      final dbSettings = await SettingsRepository().getSettings();
+      final dbTaskReminders = dbSettings['taskReminders'] as bool?;
+      if (dbTaskReminders != null) {
+        setState(() {
+          taskReminders = dbTaskReminders;
+        });
+        await prefs.setBool('task_reminders', dbTaskReminders);
+      }
+    } catch (e) {
+      debugPrint('Failed to load database settings: $e');
+    }
   }
 
   Future<void> _savePreferences() async {
+    // 1. Save locally first
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('enable_notifications', enableNotifications);
     await prefs.setBool('task_reminders', taskReminders);
     await prefs.setBool('focus_session_alerts', focusSessionAlerts);
     await prefs.setBool('break_reminders', breakReminders);
     await prefs.setBool('streak_updates', streakUpdates);
+
+    // 2. Sync to database
+    try {
+      await SettingsRepository().updateSettings({
+        'taskReminders': taskReminders,
+      });
+    } catch (e) {
+      debugPrint('Failed to sync settings to database: $e');
+    }
   }
 
   @override

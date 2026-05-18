@@ -104,6 +104,11 @@ export class PushNotificationService {
         },
         isCompleted: false,
         lastNotifiedAt: null, // Avoid duplicate spamming
+        user: {
+          settings: {
+            taskReminders: true,
+          },
+        },
       },
       include: {
         user: true,
