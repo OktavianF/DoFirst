@@ -76,8 +76,8 @@ class _HomePageContentState extends State<_HomePageContent> {
                     ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // _buildHeaderSection(viewModel),
-                        // const SizedBox(height: 32.0),
+                        _buildHeaderSection(viewModel),
+                        const SizedBox(height: 32.0),
                         _buildHeroTaskSection(context, viewModel),
                         const SizedBox(height: 32.0),
                         _buildUpNextSection(context, viewModel),
@@ -136,6 +136,17 @@ class _HomePageContentState extends State<_HomePageContent> {
     );
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
   Widget _buildHeaderSection(HomeViewModel viewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +154,7 @@ class _HomePageContentState extends State<_HomePageContent> {
         Text(
           'WELCOME BACK',
           style: TextStyle(
-fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w400,
             fontSize: 12.0,
             letterSpacing: 2.4,
             color: const Color(0xFF777587),
@@ -151,74 +162,13 @@ fontWeight: FontWeight.w400,
         ),
         const SizedBox(height: 8.0),
         Text(
-          'Good morning,\n${viewModel.userName}',
+          '${_getGreeting()},\n${viewModel.userName}',
           style: const TextStyle(
-fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             fontSize: 36.0,
             color: Color(0xFF191C1D),
             height: 1.1,
             letterSpacing: -0.9,
-          ),
-        ),
-        const SizedBox(height: 16.0),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F5),
-            borderRadius: BorderRadius.circular(24.0),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 16.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TASKS DONE',
-                      style: TextStyle(
-fontWeight: FontWeight.bold,
-                        fontSize: 10.0,
-                        letterSpacing: 1.0,
-                        color: const Color(0xFF777587),
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${viewModel.tasksDone} ',
-                          style: const TextStyle(
-fontWeight: FontWeight.w800,
-                            fontSize: 24.0,
-                            color: Color(0xFF191C1D),
-                          ),
-                        ),
-                        Text(
-                          '/ ${viewModel.totalTasks}',
-                          style: TextStyle(
-fontWeight: FontWeight.w500,
-                            fontSize: 14.0,
-                            color: const Color(0xFF777587),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ],

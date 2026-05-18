@@ -103,23 +103,34 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 40),
                   Text(
-                    'Welcome',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.headlineMedium?.copyWith(fontSize: 30),
+                    'Welcome to',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF191C1D),
+                        ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 60,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.broken_image, size: 60),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Your automated priority assistant.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(fontSize: 18),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 16,
+                          color: const Color(0xFF5C5E61),
+                        ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
 
                   // Wrap inside Auth Card
                   ClipRRect(
