@@ -1,5 +1,5 @@
 # DoFirst 🎯
-
+[DOWNLOAD HERE👈🏻](https://github.com/OktavianF/DoFirst/releases/download/v1.0.1/do-first-v1.0.1.apk)
 **DoFirst** adalah aplikasi manajemen tugas berbasis prioritas cerdas yang membantu pengguna menentukan *task apa yang harus dikerjakan terlebih dahulu*, bukan sekadar mencatat daftar to-do.
 
 Aplikasi ini menggunakan **Deadline-Dominant Weighted Scoring Model** untuk menghitung prioritas setiap tugas secara otomatis dan dinamis berdasarkan deadline, tingkat urgensi, kepentingan, dan tingkat kesulitan.
