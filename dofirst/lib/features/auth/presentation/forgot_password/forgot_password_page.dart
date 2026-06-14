@@ -162,7 +162,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 autofillHints: const [AutofillHints.email],
                                 keyboardType: TextInputType.emailAddress,
                                 decoration: const InputDecoration(
-                                  hintText: 'Input your email',
+                                  hintText: 'Input your Gmail address',
                                   hintStyle: TextStyle(
                                     color: Colors.black38,
                                   ),
@@ -174,6 +174,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   FormBuilderValidators.email(
                                     errorText: 'Please enter a valid email.',
                                   ),
+                                  (value) {
+                                    if (value != null &&
+                                        value.isNotEmpty &&
+                                        !value.trim().toLowerCase().endsWith('@gmail.com')) {
+                                      return 'Only Gmail accounts (@gmail.com) are supported.';
+                                    }
+                                    return null;
+                                  },
                                 ]),
                               ),
                               const SizedBox(height: 32),

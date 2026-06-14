@@ -10,7 +10,11 @@ class FocusSessionPage extends StatelessWidget {
   final String taskName;
   final String? taskId;
 
-  const FocusSessionPage({super.key, this.taskName = 'Finish PRD Draft', this.taskId});
+  const FocusSessionPage({
+    super.key,
+    this.taskName = 'Finish PRD Draft',
+    this.taskId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,138 +53,172 @@ class _FocusSessionContent extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+    return PopScope(
+      canPop: !viewModel.isLocked,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && viewModel.isLocked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '🔒 Focus Lock is active! You cannot leave this page.',
+              ),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: viewModel.isLocked
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
         ),
-      ),
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 16),
-                    // Active Task Display
-                    Text(
-                      viewModel.isBreakMode ? 'TAKING A BREAK' : 'CURRENTLY FOCUSING',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      viewModel.isBreakMode
-                          ? 'Stretch your body or take a short walk!'
-                          : taskName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: viewModel.isBreakMode ? AppColors.inputFill : AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.timer, 
-                                size: 14, 
-                                color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Focus: ${viewModel.focusMinutes}m',
-                                style: TextStyle(
-                                  color: viewModel.isBreakMode ? AppColors.textSecondary : Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+        body: SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 16),
+                      // Active Task Display
+                      Text(
+                        viewModel.isBreakMode
+                            ? 'TAKING A BREAK'
+                            : 'CURRENTLY FOCUSING',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                          letterSpacing: 1.5,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: viewModel.isBreakMode ? AppColors.primary : AppColors.inputFill,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.coffee,
-                                size: 14,
-                                color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Break: ${viewModel.breakMinutes}m',
-                                style: TextStyle(
-                                  color: viewModel.isBreakMode ? Colors.white : AppColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        viewModel.isBreakMode
+                            ? 'Stretch your body or take a short walk!'
+                            : taskName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          height: 1.2,
                         ),
-                      ],
-                    ),
-                    const Spacer(),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: viewModel.isBreakMode
+                                  ? AppColors.inputFill
+                                  : AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer,
+                                  size: 14,
+                                  color: viewModel.isBreakMode
+                                      ? AppColors.textSecondary
+                                      : Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Focus: ${viewModel.focusMinutes}m',
+                                  style: TextStyle(
+                                    color: viewModel.isBreakMode
+                                        ? AppColors.textSecondary
+                                        : Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: viewModel.isBreakMode
+                                  ? AppColors.primary
+                                  : AppColors.inputFill,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.coffee,
+                                  size: 14,
+                                  color: viewModel.isBreakMode
+                                      ? Colors.white
+                                      : AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Break: ${viewModel.breakMinutes}m',
+                                  style: TextStyle(
+                                    color: viewModel.isBreakMode
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
 
-                    // Central Timer Display
-                    _buildProgressTimer(context, viewModel),
+                      // Central Timer Display
+                      _buildProgressTimer(context, viewModel),
 
-                    const Spacer(),
+                      const Spacer(),
 
-                    // Timer Controls
-                    _buildControls(viewModel),
-                    const SizedBox(height: 24),
+                      // Timer Controls
+                      _buildControls(context, viewModel),
+                      const SizedBox(height: 24),
 
-                    // Finish Action
-                    _buildFinishAction(context),
-                    const SizedBox(height: 24),
-                  ],
+                      // Finish Action
+                      _buildFinishAction(context, viewModel),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -244,7 +282,7 @@ class _FocusSessionContent extends StatelessWidget {
     );
   }
 
-  Widget _buildControls(FocusSessionViewModel viewModel) {
+  Widget _buildControls(BuildContext context, FocusSessionViewModel viewModel) {
     return Row(
       children: [
         Expanded(
@@ -269,7 +307,55 @@ class _FocusSessionContent extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: viewModel.stopTimer,
+            onPressed: () {
+              if (viewModel.isLocked) {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: AppColors.background,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: const Text(
+                      'Give Up?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    content: const Text(
+                      'Are you sure you want to stop the focus session? Focus Lock will be disabled.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: AppColors.textMuted),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD32F2F),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          viewModel.stopTimer();
+                        },
+                        child: const Text('Yes, Stop'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                viewModel.stopTimer();
+              }
+            },
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textPrimary,
               backgroundColor: AppColors.background,
@@ -290,7 +376,10 @@ class _FocusSessionContent extends StatelessWidget {
     );
   }
 
-  Widget _buildFinishAction(BuildContext context) {
+  Widget _buildFinishAction(
+    BuildContext context,
+    FocusSessionViewModel viewModel,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -342,6 +431,12 @@ class _FocusSessionContent extends StatelessWidget {
                               // Continue even if delete fails
                             }
                           }
+                          // Ensure DND is disabled if we complete the task
+                          if (viewModel.isLocked) {
+                            viewModel
+                                .stopTimer(); // this will disable DND via _pauseTimer -> _removeDndState
+                          }
+
                           if (context.mounted) {
                             Navigator.of(context).pop();
                             Navigator.of(context).pushReplacement(

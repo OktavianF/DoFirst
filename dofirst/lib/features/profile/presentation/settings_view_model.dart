@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/repositories/settings_repository.dart';
 import '../../../shared/services/api_client.dart';
 import '../../../shared/services/focus_notification_service.dart';
@@ -14,6 +15,7 @@ class SettingsViewModel extends ChangeNotifier {
   bool _autoStartNextSession = true;
   bool _autoStartBreak = false;
   String _sound = 'Chime';
+  bool _focusLock = false;
   bool _isLoading = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -27,6 +29,7 @@ class SettingsViewModel extends ChangeNotifier {
   bool get autoStartNextSession => _autoStartNextSession;
   bool get autoStartBreak => _autoStartBreak;
   String get sound => _sound;
+  bool get focusLock => _focusLock;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
@@ -57,6 +60,10 @@ class SettingsViewModel extends ChangeNotifier {
         _sound = 'Chime';
       }
       await FocusNotificationService().saveSoundPreference(_sound);
+
+      // Load focus lock from local storage (device-specific setting)
+      final prefs = await SharedPreferences.getInstance();
+      _focusLock = prefs.getBool('focus_lock_enabled') ?? false;
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } catch (e) {
@@ -107,6 +114,11 @@ class SettingsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateFocusLock(bool value) {
+    _focusLock = value;
+    notifyListeners();
+  }
+
   Future<bool> saveSettings() async {
     _isSaving = true;
     _errorMessage = null;
@@ -124,6 +136,11 @@ class SettingsViewModel extends ChangeNotifier {
         'sound': _sound,
       });
       await FocusNotificationService().saveSoundPreference(_sound);
+
+      // Save focus lock to local storage (device-specific)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('focus_lock_enabled', _focusLock);
+
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -146,6 +163,7 @@ class SettingsViewModel extends ChangeNotifier {
     _autoStartNextSession = true;
     _autoStartBreak = false;
     _sound = 'Chime';
+    _focusLock = false;
     _errorMessage = null;
     notifyListeners();
   }

@@ -33,10 +33,22 @@ class FocusNotificationService {
 
     await _notifications.initialize(initSettings);
 
-    // Request notification permission on Android 13+
+    // Create the channel for FCM Push Notifications
+    const AndroidNotificationChannel fcmChannel = AndroidNotificationChannel(
+      'dofirst_notifications', // Matches the channelId sent by backend
+      'Task Reminders',
+      description: 'Notifications for upcoming task deadlines',
+      importance: Importance.high,
+    );
+
+    // Request notification permission on Android 13+ and create channel
     await _notifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+        
+    await _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(fcmChannel);
 
     _initialized = true;
   }

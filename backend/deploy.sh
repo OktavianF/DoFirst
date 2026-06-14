@@ -4,7 +4,7 @@
 USER="nadhia"
 HOST="52.172.248.68"
 KEY_PATH="nadhia-key.pem"
-REMOTE_PATH="~/backend"
+REMOTE_PATH="/home/nadhia/DoFirst/backend"
 PROCESS_NAME="dofirst-backend"
 
 echo "🚀 Memulai proses deployment..."

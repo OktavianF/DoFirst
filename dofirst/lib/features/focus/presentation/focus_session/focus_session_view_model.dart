@@ -4,6 +4,8 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../shared/services/focus_notification_service.dart';
 import '../../../../shared/repositories/focus_repository.dart';
 import '../../../../shared/repositories/settings_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:do_not_disturb/do_not_disturb.dart';
 
 class FocusSessionViewModel extends ChangeNotifier {
   // Dynamic durations — loaded from user settings
@@ -17,6 +19,7 @@ class FocusSessionViewModel extends ChangeNotifier {
   int _remainingSeconds = 25 * 60;
   bool _isRunning = false;
   bool _isBreakMode = false;
+  bool _focusLockEnabled = false;
   Timer? _timer;
 
   final FocusNotificationService _notificationService = FocusNotificationService();
@@ -39,6 +42,8 @@ class FocusSessionViewModel extends ChangeNotifier {
   int get breakMinutes => _breakMinutes;
   int get completedSessions => _completedSessions;
   bool get settingsLoaded => _settingsLoaded;
+  bool get focusLockEnabled => _focusLockEnabled;
+  bool get isLocked => _isRunning && _focusLockEnabled;
   
   String get timeString {
     final minutes = (_remainingSeconds / 60).floor().toString().padLeft(2, '0');
@@ -78,6 +83,10 @@ class FocusSessionViewModel extends ChangeNotifier {
       _soundPreference = data['sound'] as String? ?? 'Chime';
       await _notificationService.saveSoundPreference(_soundPreference);
 
+      // Load focus lock from local storage
+      final prefs = await SharedPreferences.getInstance();
+      _focusLockEnabled = prefs.getBool('focus_lock_enabled') ?? false;
+
       // Reset timer to new focus duration if not currently running
       if (!_isRunning) {
         _remainingSeconds = _focusMinutes * 60;
@@ -103,6 +112,7 @@ class FocusSessionViewModel extends ChangeNotifier {
   void _startTimer() {
     _isRunning = true;
     WakelockPlus.enable(); // Keep screen on
+    _applyDndState();
     notifyListeners();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
@@ -142,6 +152,7 @@ class FocusSessionViewModel extends ChangeNotifier {
     _isRunning = false;
     _timer?.cancel();
     WakelockPlus.disable(); // Allow screen to dim
+    _removeDndState();
     notifyListeners();
   }
 
@@ -175,9 +186,38 @@ class FocusSessionViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _applyDndState() async {
+    if (_focusLockEnabled) {
+      try {
+        final dndPlugin = DoNotDisturbPlugin();
+        final hasAccess = await dndPlugin.isNotificationPolicyAccessGranted();
+        if (hasAccess) {
+          await dndPlugin.setInterruptionFilter(InterruptionFilter.none);
+        }
+      } catch (e) {
+        debugPrint('Failed to enable DND: $e');
+      }
+    }
+  }
+
+  Future<void> _removeDndState() async {
+    if (_focusLockEnabled) {
+      try {
+        final dndPlugin = DoNotDisturbPlugin();
+        final hasAccess = await dndPlugin.isNotificationPolicyAccessGranted();
+        if (hasAccess) {
+          await dndPlugin.setInterruptionFilter(InterruptionFilter.all);
+        }
+      } catch (e) {
+        debugPrint('Failed to disable DND: $e');
+      }
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _removeDndState();
     WakelockPlus.disable(); // Ensure screen dimming is restored
     super.dispose();
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:do_not_disturb/do_not_disturb.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_view_model.dart';
 import '../../../shared/services/focus_notification_service.dart';
 
@@ -222,6 +224,16 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
                                         value: vm.autoStartBreak,
                                         onChanged: (val) => vm.updateAutoStartBreak(val),
                                       ),
+                                      const SizedBox(height: 24),
+                                      _buildToggleTile(
+                                        icon: Icons.lock_outline,
+                                        iconBg: const Color(0xFFFFEBEE),
+                                        iconColor: const Color(0xFFD32F2F),
+                                        title: 'Focus Lock',
+                                        subtitle: 'Lock screen & block notifications',
+                                        value: vm.focusLock,
+                                        onChanged: (val) => _handleFocusLockToggle(vm, val),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -282,6 +294,233 @@ class _FocusBreakSettingsPageState extends State<FocusBreakSettingsPage> {
         },
       ),
     );
+  }
+
+  void _handleFocusLockToggle(SettingsViewModel vm, bool value) {
+    if (!value) {
+      // Turning OFF — no confirmation needed
+      vm.updateFocusLock(false);
+      return;
+    }
+
+    // Turning ON — show confirmation modal
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEBEE),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_outline, color: Color(0xFFD32F2F), size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Aktifkan Focus Lock?',
+                  style: TextStyle(
+                    color: Color(0xFF191C1D),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ketika Focus Lock aktif dan Pomodoro berjalan:',
+                style: TextStyle(
+                  color: Color(0xFF464555),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.block, 'Anda tidak bisa keluar dari halaman Focus Session'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.arrow_back, 'Tombol back & gesture dinonaktifkan'),
+              const SizedBox(height: 12),
+              _buildInfoRow(Icons.notifications_off, 'Notifikasi dari aplikasi lain akan diblokir (DND)'),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3525CD).withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF3525CD).withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '🍅 Teknik Pomodoro',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF3525CD),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Focus ${vm.focusDuration}m → Break ${vm.shortBreak}m → Repeat\n'
+                      'Setiap ${vm.sessionsBeforeLongBreak} sesi → Long Break ${vm.longBreak}m',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF464555),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Focus Lock hanya aktif selama timer Pomodoro berjalan. Saat timer di-pause atau dihentikan, lock akan dinonaktifkan.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E), height: 1.4),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Color(0xFF777587), fontWeight: FontWeight.w600),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await _checkAndRequestDndPermission(vm);
+              },
+              child: const Text(
+                'Ya, Aktifkan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFFD32F2F)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF464555), height: 1.3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _checkAndRequestDndPermission(SettingsViewModel vm) async {
+    final dndPlugin = DoNotDisturbPlugin();
+
+    try {
+      final hasAccess = await dndPlugin.isNotificationPolicyAccessGranted();
+      if (hasAccess) {
+        vm.updateFocusLock(true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('🔒 Focus Lock diaktifkan!')),
+          );
+        }
+      } else {
+        // Guide user to grant DND permission
+        if (mounted) {
+          final shouldOpen = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Text(
+                'Izin Diperlukan',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF191C1D)),
+              ),
+              content: const Text(
+                'Untuk memblokir notifikasi dari aplikasi lain saat fokus, DoFirst memerlukan izin "Do Not Disturb Access".\n\n'
+                'Anda akan diarahkan ke Settings untuk mengaktifkannya. Cukup sekali saja.',
+                style: TextStyle(color: Color(0xFF464555), fontSize: 14, height: 1.5),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Nanti', style: TextStyle(color: Color(0xFF777587))),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3525CD),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Buka Settings'),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldOpen == true) {
+            await dndPlugin.openNotificationPolicyAccessSettings();
+            // After returning from settings, check again
+            await Future.delayed(const Duration(seconds: 1));
+            final granted = await dndPlugin.isNotificationPolicyAccessGranted();
+            if (granted) {
+              vm.updateFocusLock(true);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('🔒 Focus Lock diaktifkan!')),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Izin belum diberikan. Focus Lock tidak diaktifkan.')),
+                );
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // If DND plugin fails (e.g., on iOS), enable lock without DND
+      debugPrint('DND plugin error: $e');
+      vm.updateFocusLock(true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🔒 Focus Lock diaktifkan (tanpa DND).')),
+        );
+      }
+    }
   }
 
   void _showDurationPicker({

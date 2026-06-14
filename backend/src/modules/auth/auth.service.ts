@@ -1,6 +1,7 @@
-import { supabaseAdmin, createSupabaseClient } from '../../lib/supabase';
+import { supabaseAdmin } from '../../lib/supabase';
 import { prisma } from '../../lib/prisma';
 import { AppError } from '../../lib/AppError';
+import { env } from '../../config/env';
 
 export class AuthService {
   /**
@@ -131,15 +132,27 @@ export class AuthService {
 
   /**
    * Send a password reset email via Supabase Auth.
+   * Only allows @gmail.com emails so the reset link is delivered to Gmail.
    */
   async forgotPassword(email: string) {
-    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email);
+    // Validate Gmail domain
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.endsWith('@gmail.com')) {
+      throw AppError.badRequest(
+        'Password reset is only available for Gmail accounts. Please use your @gmail.com email.'
+      );
+    }
+
+    const redirectTo = `${env.APP_URL}/auth/reset-password`;
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo,
+    });
 
     if (error) {
       throw AppError.badRequest(error.message);
     }
 
-    return { message: 'Password reset link sent to your email' };
+    return { message: 'Password reset link sent to your Gmail' };
   }
 
   /**
@@ -185,11 +198,21 @@ export class AuthService {
   }
 
   /**
-   * Reset a user's password using the access token they obtained via password recovery redirect.
+   * Reset a user's password using the access token from the password recovery redirect.
+   * Uses Admin API for reliability (avoids PKCE/crypto issues on non-HTTPS).
    */
   async resetPassword(password: string, accessToken: string) {
-    const client = createSupabaseClient(accessToken);
-    const { error } = await client.auth.updateUser({ password });
+    // Verify the access token to extract the user identity
+    const { data: userData, error: verifyError } = await supabaseAdmin.auth.getUser(accessToken);
+
+    if (verifyError || !userData.user) {
+      throw AppError.badRequest('Invalid or expired reset token. Please request a new password reset link.');
+    }
+
+    // Use admin API to update the password (bypasses client-side crypto requirements)
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
+      password,
+    });
 
     if (error) {
       throw AppError.badRequest(error.message);
